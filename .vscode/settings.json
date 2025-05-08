@@ -1,0 +1,29 @@
+{
+  "cSpell.words": [
+    "blueprintjs",
+    "Favrit",
+    "firestore",
+    "Meny",
+    "networkidle",
+    "Oppdater",
+    "Oppgjørsrapport",
+    "Produkt",
+    "stocklio",
+    "VBONLINE"
+  ],
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "biomejs.biome",
+  "explorer.compactFolders": false,
+  "editor.codeActionsOnSave": {
+    "source.organizeImports.biome": "explicit"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  }
+}
