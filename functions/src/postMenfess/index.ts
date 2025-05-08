@@ -10,7 +10,6 @@ export function initPostMenfessModule(
   bot: Bot,
   callback?: (sentMessage: any) => Promise<void>
 ): void {
-  // Initialize the post handlers with optional callback
   initPostHandlers(bot, callback);
 }
 

@@ -190,7 +190,7 @@ export async function postToChannel(ctx: Context) {
       mediaId = lastPhoto.file_id;
       messageText = ctx.message.caption || "";
 
-      const caption = `📝 Anonymous Menfess\n\n${messageText}${footer}`;
+      const caption = `${messageText}${footer}`;
 
       sentMessage = await ctx.api.sendPhoto(
         botConfig.channelId,
@@ -202,7 +202,7 @@ export async function postToChannel(ctx: Context) {
     } else if (ctx.message.text) {
       messageText = ctx.message.text;
 
-      const caption = `📝 Anonymous Menfess\n\n${messageText}${footer}`;
+      const caption = `${messageText}${footer}`;
 
       sentMessage = await ctx.api.sendMessage(botConfig.channelId, caption);
     } else {

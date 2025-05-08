@@ -4,6 +4,12 @@ import { botConfig } from "../utils/config";
 import { db } from "../utils/firebase";
 import { extractMenfessUID } from "../utils/helpers";
 import type { MenfessDbData } from "../utils/types";
+
+/**
+ * Post menfess interaction
+ * @param ctx The context object
+ * @param bot The bot instance
+ */
 export async function postMenfessInteraction(ctx: Context, bot: Bot) {
   const keyboard = new InlineKeyboard()
     .text("👊 Hit Me!", "hitme")
@@ -32,6 +38,11 @@ export async function postMenfessInteraction(ctx: Context, bot: Bot) {
   }
 }
 
+/**
+ * Check if the message is forwarded from the channel to the group
+ * @param ctx The context object
+ * @returns True if the message is forwarded from the channel to the group, false otherwise
+ */
 export function isForwardedMenfessFromChannelToGroup(ctx: Context): boolean {
   return Boolean(
     ctx.senderChat?.id === botConfig.channelGroupChatIdNumber &&
@@ -45,8 +56,6 @@ export function isForwardedMenfessFromChannelToGroup(ctx: Context): boolean {
  * @param bot The Telegram bot instance
  */
 export function initInteractionHandlers(bot: Bot): void {
-  console.log("📋 Initializing interaction handlers");
-
   bot.callbackQuery(["hitme", "who", "talk", "report"], async (ctx) => {
     const action = ctx.callbackQuery.data;
     const userId = ctx.from?.id;

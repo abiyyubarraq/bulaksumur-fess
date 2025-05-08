@@ -18,15 +18,6 @@ export const botConfig: BotConfig = {
   },
 };
 
-// Normalize channel and group IDs (ensure they don't have @ for API calls)
-if (botConfig.channelId.startsWith("@")) {
-  console.log("Normalized channelId from @ format for API calls");
-}
-
-if (botConfig.groupChatId.startsWith("@")) {
-  console.log("Normalized groupChatId from @ format for API calls");
-}
-
 // Validate config
 if (!botConfig.botToken) {
   throw new Error("BOT_TOKEN is not defined in environment variables");
