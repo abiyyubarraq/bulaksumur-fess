@@ -24,6 +24,10 @@ jobs:
         working-directory: ./functions
         run: bun install
         
+      - name: Install Biome
+        working-directory: ./functions
+        run: bun add -d @biomejs/biome
+        
       - name: Run linter
         working-directory: ./functions
         run: bun run lint
