@@ -52,79 +52,75 @@ export function initPostHandlers(
     }
   });
 
-  // Handle all message types for menfess content
-  bot.on(
-    ["message:text", "message:photo", "message:video", "message:audio"],
-    async (ctx) => {
-      const userId = ctx.from?.id;
+  bot.on(["message:text", "message:photo"], async (ctx) => {
+    const userId = ctx.from?.id;
 
-      if (!userId) return;
-      if (isForwardedMenfessFromChannelToGroup(ctx)) {
-        await postMenfessInteraction(ctx, bot);
-        return;
-      }
-      const state = userStates.get(userId);
-      if (state?.waitingForContent) {
-        userStates.delete(userId);
+    if (!userId) return;
+    if (isForwardedMenfessFromChannelToGroup(ctx)) {
+      await postMenfessInteraction(ctx, bot);
+      return;
+    }
+    const state = userStates.get(userId);
+    if (state?.waitingForContent) {
+      userStates.delete(userId);
 
-        try {
-          // Delete the waiting message if it exists
-          if (state.messageToDelete) {
-            try {
-              await ctx.api.deleteMessage(ctx.chat.id, state.messageToDelete);
-            } catch (error) {
-              console.error("Failed to delete message:", error);
-            }
+      try {
+        // Delete the waiting message if it exists
+        if (state.messageToDelete) {
+          try {
+            await ctx.api.deleteMessage(ctx.chat.id, state.messageToDelete);
+          } catch (error) {
+            console.error("Failed to delete message:", error);
           }
-
-          // Check for trigger word in the message
-          let messageText = "";
-
-          if (ctx.message.text) {
-            messageText = ctx.message.text;
-          } else if (ctx.message.caption) {
-            messageText = ctx.message.caption;
-          }
-
-          // If the message doesn't contain the trigger word, reject it
-          if (!containsTrigger(messageText, botConfig.postTrigger)) {
-            await ctx.reply(
-              `Your message must include the trigger word "${botConfig.postTrigger}" to be posted as a menfess.\n\n` +
-                "Please try again with the trigger word in your message."
-            );
-            return;
-          }
-
-          // Post the message to the channel
-          const sentMessage = await postToChannel(ctx);
-
-          // Call the callback if provided
-          if (callback && sentMessage) {
-            console.log(
-              "Executing callback for message ID:",
-              sentMessage.message_id
-            );
-            try {
-              await callback(sentMessage);
-            } catch (callbackError) {
-              console.error("Error in callback:", callbackError);
-            }
-          }
-
-          // Confirm to the user
-          await ctx.reply(
-            "Your message has been posted anonymously! ✅\n" +
-              "You can send another menfess by using /post."
-          );
-        } catch (error) {
-          console.error("Error posting message:", error);
-          await ctx.reply(
-            "Sorry, there was an error posting your message. Please try again later."
-          );
         }
+
+        // Check for trigger word in the message
+        let messageText = "";
+
+        if (ctx.message.text) {
+          messageText = ctx.message.text;
+        } else if (ctx.message.caption) {
+          messageText = ctx.message.caption;
+        }
+
+        // If the message doesn't contain the trigger word, reject it
+        if (!containsTrigger(messageText, botConfig.postTrigger)) {
+          await ctx.reply(
+            `Your message must include the trigger word "${botConfig.postTrigger}" to be posted as a menfess.\n\n` +
+              "Please try again with the trigger word in your message."
+          );
+          return;
+        }
+
+        // Post the message to the channel
+        const sentMessage = await postToChannel(ctx);
+
+        // Call the callback if provided
+        if (callback && sentMessage) {
+          console.log(
+            "Executing callback for message ID:",
+            sentMessage.message_id
+          );
+          try {
+            await callback(sentMessage);
+          } catch (callbackError) {
+            console.error("Error in callback:", callbackError);
+          }
+        }
+
+        // Confirm to the user
+        await ctx.reply(
+          "Your message has been posted anonymously! ✅\n" +
+            "You can send another menfess by using /post."
+        );
+      } catch (error) {
+        console.error("Error posting message:", error);
+        await ctx.reply(
+          "Sorry, there was an error posting your message. Please try again later."
+        );
       }
     }
-  );
+  });
 }
 
 /**
@@ -181,7 +177,6 @@ export async function postToChannel(ctx: Context) {
     let mediaType = "";
     let mediaId = "";
 
-    // Handle different message types
     if (ctx.message.photo && ctx.message.photo.length > 0) {
       // For photos - get the highest resolution photo (last in the array)
       const photoArray = ctx.message.photo;
@@ -204,38 +199,7 @@ export async function postToChannel(ctx: Context) {
           caption: caption,
         }
       );
-    } else if (ctx.message.video) {
-      // For videos
-      mediaType = "video";
-      mediaId = ctx.message.video.file_id;
-      messageText = ctx.message.caption || "";
-
-      const caption = `📝 Anonymous Menfess\n\n${messageText}${footer}`;
-
-      sentMessage = await ctx.api.sendVideo(
-        botConfig.channelId,
-        ctx.message.video.file_id,
-        {
-          caption: caption,
-        }
-      );
-    } else if (ctx.message.audio) {
-      // For audio
-      mediaType = "audio";
-      mediaId = ctx.message.audio.file_id;
-      messageText = ctx.message.caption || "";
-
-      const caption = `📝 Anonymous Menfess\n\n${messageText}${footer}`;
-
-      sentMessage = await ctx.api.sendAudio(
-        botConfig.channelId,
-        ctx.message.audio.file_id,
-        {
-          caption: caption,
-        }
-      );
     } else if (ctx.message.text) {
-      // For text messages
       messageText = ctx.message.text;
 
       const caption = `📝 Anonymous Menfess\n\n${messageText}${footer}`;

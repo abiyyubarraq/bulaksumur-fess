@@ -79,7 +79,7 @@ The bot uses the following Firestore collections:
   - messageId: Original message ID
   - senderId: User ID who sent the message
   - text: Message text
-  - mediaType: Type of media (photo, video, audio)
+  - mediaType: Type of media (photo)
   - mediaId: File ID for media
   - timestamp: Posting time
   - channelMessageId: Message ID in the channel

@@ -6,7 +6,6 @@ import { botConfig } from "../utils/config";
  * @param bot The Telegram bot instance
  */
 export function initCommands(bot: Bot): void {
-  // Start command handler
   bot.command("start", async (ctx) => {
     const keyboard = new InlineKeyboard()
       .text("Post Menfess", "post")
@@ -23,7 +22,6 @@ export function initCommands(bot: Bot): void {
     );
   });
 
-  // Help command handler
   bot.command("help", async (ctx) => {
     await ctx.reply(
       "Bulaksumur Menfess Bot Commands:\n\n" +
