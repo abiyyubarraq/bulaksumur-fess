@@ -6,8 +6,8 @@
     "dev": "bun --watch src/index.ts",
     "start": "bun run src/index.ts",
     "build": "bun build src/index.ts --outdir=dist",
-    "lint": "biome check .",
-    "format": "biome format --write ."
+    "lint": "npx @biomejs/biome lint --diagnostic-level=error .",
+    "format": "npx @biomejs/biome format --write ."
   },
   "devDependencies": {
     "@types/bun": "latest"
