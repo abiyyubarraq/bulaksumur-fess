@@ -122,7 +122,7 @@ export function initInteractionHandlers(bot: Bot): void {
       );
       await ctx.answerCallbackQuery("Your request sent to user");
     } else if (action === "report") {
-      await db.collection("reports").doc(mmenfessUID).set({
+      await db.collection("reports").add({
         reporterId: userId,
         reporterUsername: userName,
         menfessUID: mmenfessUID,
@@ -134,7 +134,7 @@ export function initInteractionHandlers(bot: Bot): void {
         createdAt: new Date(),
       });
       await ctx.answerCallbackQuery(
-        `Your report has been sent to the admin! 🚫`
+        "Your report has been sent to the admin 🫡"
       );
     }
 

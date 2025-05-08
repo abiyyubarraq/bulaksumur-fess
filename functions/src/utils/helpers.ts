@@ -110,3 +110,41 @@ export const retryWrapper = async (
   }
   return { isFail, errorMessage };
 };
+
+/**
+ * Format a Firestore timestamp for display
+ * @param timestamp The timestamp to format
+ * @returns Formatted date string or "N/A" if timestamp is undefined
+ */
+export function formatDateFromTimestamp(timestamp?: any): string {
+  if (!timestamp) return "N/A";
+
+  if (timestamp.toDate) {
+    const date = timestamp.toDate();
+    return date.toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+  }
+
+  if (timestamp instanceof Date) {
+    return timestamp.toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+  }
+
+  return "N/A";
+}
+
+/**
+ * Validate email format
+ * @param email The email string to validate
+ * @returns Boolean indicating if email format is valid
+ */
+export function isValidEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+}

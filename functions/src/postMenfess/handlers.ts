@@ -1,4 +1,4 @@
-import { Bot, Context } from "grammy";
+import { Bot, Context, InlineKeyboard } from "grammy";
 import { postMenfessInteraction } from "../interactions";
 import { isForwardedMenfessFromChannelToGroup } from "../interactions";
 import { botConfig } from "../utils/config";
@@ -8,6 +8,7 @@ import {
   generateUID,
   getFormattedDate,
 } from "../utils/helpers";
+import { isUserRegistered } from "../utils/services";
 import type { MenfessState } from "../utils/types";
 
 // User states for handling menfess messages
@@ -16,12 +17,8 @@ const userStates = new Map<number, MenfessState>();
 /**
  * Initialize post menfess handlers
  * @param bot The Telegram bot instance
- * @param callback Optional callback function for when a message is posted
  */
-export function initPostHandlers(
-  bot: Bot,
-  callback?: (sentMessage: any) => Promise<void>
-): void {
+export function initPostHandlers(bot: Bot): void {
   // Post command handler (only use /post)
   bot.command("post", (ctx) => handlePostCommand(ctx));
 
@@ -92,22 +89,6 @@ export function initPostHandlers(
           return;
         }
 
-        // Post the message to the channel
-        const sentMessage = await postToChannel(ctx);
-
-        // Call the callback if provided
-        if (callback && sentMessage) {
-          console.log(
-            "Executing callback for message ID:",
-            sentMessage.message_id
-          );
-          try {
-            await callback(sentMessage);
-          } catch (callbackError) {
-            console.error("Error in callback:", callbackError);
-          }
-        }
-
         // Confirm to the user
         await ctx.reply(
           "Your message has been posted anonymously! ✅\n" +
@@ -134,6 +115,24 @@ export async function handlePostCommand(ctx: Context): Promise<void> {
   // If callback query, answer it
   if (ctx.callbackQuery) {
     await ctx.answerCallbackQuery();
+  }
+
+  // Check if user is registered
+  const isRegistered = await isUserRegistered(userId);
+  if (!isRegistered) {
+    const keyboard = new InlineKeyboard().text(
+      "Register Now",
+      "start_registration"
+    );
+
+    await ctx.reply(
+      "You need to register before posting a menfess.\n\n" +
+        "Please register to unlock all features of this bot.",
+      {
+        reply_markup: keyboard,
+      }
+    );
+    return;
   }
 
   // Set user state to waiting for content

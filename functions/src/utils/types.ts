@@ -22,6 +22,21 @@ export interface BotConfig {
   };
 }
 
+// User session and registration status
+export enum SessionStatus {
+  NOT_REGISTERED = "not_registered",
+  REGISTERED = "registered",
+  REGISTRATION_IN_PROGRESS = "registration_in_progress",
+}
+
+export interface UserSession {
+  userId: number;
+  username?: string;
+  status: SessionStatus;
+  registeredAt?: Timestamp;
+  lastActivity: Timestamp;
+}
+
 // Firestore document types
 export interface MenfessDbData {
   channelChatId: number;
@@ -41,4 +56,25 @@ export interface ReportDbData {
   menfessSenderId: number;
   menfessSenderUsername: string;
   createdAt: Timestamp;
+}
+
+// MenfessPost type represents a menfess post to be saved in Firestore
+export interface MenfessPost {
+  text: string;
+  userId: number;
+  username?: string;
+  messageId?: number;
+  photoFileId?: string;
+  timestamp?: Date | Timestamp;
+  isApproved?: boolean;
+}
+
+// Interaction type for tracking user interactions with posts
+export interface Interaction {
+  userId: number;
+  username?: string;
+  postId: string;
+  messageId: number;
+  type: "like" | "dislike" | "report";
+  timestamp?: Date | Timestamp;
 }

@@ -1,6 +1,7 @@
 import { Bot } from "grammy";
 import { initInteractionHandlers } from "../interactions";
-import { initPostMenfessModule } from "../postMenfess";
+import { initPostHandlers } from "../postMenfess";
+import { initSessionModule } from "../registerSessions";
 import { botConfig } from "../utils/config";
 import { initCommands } from "./commands";
 
@@ -12,7 +13,8 @@ export function createBot(): Bot {
   const bot = new Bot(botConfig.botToken);
 
   initCommands(bot);
-  initPostMenfessModule(bot);
+  initSessionModule(bot);
+  initPostHandlers(bot);
   initInteractionHandlers(bot);
 
   bot.catch((err) => {

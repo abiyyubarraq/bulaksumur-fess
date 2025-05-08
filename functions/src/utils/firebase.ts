@@ -24,3 +24,12 @@ try {
 export const db = getFirestore(app);
 export const auth = getAuth(app);
 export const storage = getStorage(app);
+
+// Collection names used across the application
+export const collections = {
+  users: "users",
+  menfess: "menfessPosts",
+  interactions: "interactions",
+  reports: "reports",
+  sessions: "sessions",
+};
