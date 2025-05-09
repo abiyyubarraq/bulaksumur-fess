@@ -43,6 +43,7 @@ export function createBot(): Bot<BotContext> {
       description: "Peraturan Base",
     },
   ]);
+
   initSessionModule(bot);
   initCommands(bot);
   initPostHandlers(bot);

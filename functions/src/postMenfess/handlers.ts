@@ -1,4 +1,4 @@
-import { Bot, Context } from "grammy";
+import { Bot, Context, InlineKeyboard } from "grammy";
 import { postMenfessInteraction } from "../interactions";
 import { isForwardedMenfessFromChannelToGroup } from "../interactions";
 import { botConfig } from "../utils/config";
@@ -13,41 +13,17 @@ import type { BotContext, MenfessState } from "../utils/types";
 // User states for handling menfess messages
 const userStates = new Map<number, MenfessState>();
 
+const waitingForMenfessMessage =
+  `Balas dengan isi Menfess Kamu\n\n` +
+  `Menfess hanya bisa berupa text & photo yang terdapat keyword trigger ${botConfig.postTrigger}.\n\n` +
+  `❕Menfess berupa text panjang minimal 32 karakter dan maksimal 888 karakter. Untuk Menfess dengan media panjang maksimal adalah 260 karakter.\n\n` +
+  `❕Hanya boleh karakter ASCII dengan maksimal 2 baris baru, diperbolehkan memakai format text telegram.`;
+
 /**
  * Initialize post menfess handlers
  * @param bot The Telegram bot instance
  */
 export function initPostHandlers(bot: Bot<BotContext>): void {
-  // Post command handler (only use /post)
-  bot.command("post", (ctx) => handlePostCommand(ctx));
-
-  // Handle callback queries for post button
-  bot.callbackQuery("post", (ctx) => handlePostCommand(ctx));
-
-  // Cancel command to abort posting
-  bot.command("cancel", async (ctx) => {
-    const userId = ctx.from?.id;
-    if (!userId) return;
-
-    const state = userStates.get(userId);
-    if (state?.waitingForContent) {
-      userStates.delete(userId);
-
-      // Delete the waiting message if it exists
-      if (state.messageToDelete) {
-        try {
-          await ctx.api.deleteMessage(ctx.chat.id, state.messageToDelete);
-        } catch (error) {
-          console.error("Failed to delete message:", error);
-        }
-      }
-
-      await ctx.reply("Menfess posting cancelled.");
-    } else {
-      await ctx.reply("No active operation to cancel.");
-    }
-  });
-
   bot.on(["message:text", "message:photo"], async (ctx) => {
     const userId = ctx.from?.id;
 
@@ -81,14 +57,19 @@ export function initPostHandlers(bot: Bot<BotContext>): void {
 
         // If the message doesn't contain the trigger word, reject it
         if (!containsTrigger(messageText, botConfig.postTrigger)) {
-          await ctx.reply(
-            `Your message must include the trigger word "${botConfig.postTrigger}" to be posted as a menfess.\n\n` +
-              "Please try again with the trigger word in your message."
-          );
+          const keyboard = new InlineKeyboard();
+          keyboard.text("« BACK", "back_to_start_post_menu");
+          const sentMessage = await ctx.reply(waitingForMenfessMessage, {
+            reply_markup: keyboard,
+          });
+          userStates.set(userId, {
+            waitingForContent: true,
+            messageToDelete: sentMessage?.message_id,
+          });
           return;
         }
 
-        await postToChannel(ctx);
+        // await postToChannel(ctx);
 
         // Confirm to the user
         await ctx.reply(
@@ -117,18 +98,16 @@ export async function handlePostCommand(ctx: Context): Promise<void> {
   if (ctx.callbackQuery) {
     await ctx.answerCallbackQuery();
   }
-
+  const keyboard = new InlineKeyboard();
+  keyboard.text("« BACK", "back_to_start_post_menu");
   // Set user state to waiting for content
-  const message = await ctx.reply(
-    `Please send your message. It will be posted anonymously to the channel.\n\n` +
-      `Your message MUST include the word "${botConfig.postTrigger}" to be posted.\n\n` +
-      "You can send text, photos, or videos.\n\n" +
-      "To cancel, send /cancel."
-  );
+  const sentMessage = (await ctx.editMessageText(waitingForMenfessMessage, {
+    reply_markup: keyboard,
+  })) as { message_id: number };
 
   userStates.set(userId, {
     waitingForContent: true,
-    messageToDelete: message.message_id,
+    messageToDelete: sentMessage?.message_id,
   });
 }
 
@@ -190,7 +169,7 @@ export async function postToChannel(ctx: BotContext) {
     } else {
       await ctx.api.sendMessage(
         userId,
-        "Please send a text, photo, or video to post as a menfess."
+        "Please send a text, or photo to post as a menfess."
       );
     }
 
