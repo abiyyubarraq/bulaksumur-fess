@@ -66,16 +66,6 @@ export const updateUserSession = async (
   }
 };
 
-export const isUserRegistered = async (userId: number): Promise<boolean> => {
-  try {
-    const session = await getUserSession(userId);
-    return session?.status === "registered";
-  } catch (error) {
-    console.error("Error checking if user is registered:", error);
-    return false;
-  }
-};
-
 // Generic document operations
 // export const saveDocument = async <T extends DocumentData>(
 //   collection: string,

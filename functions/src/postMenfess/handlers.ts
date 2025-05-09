@@ -1,4 +1,4 @@
-import { Bot, Context, InlineKeyboard } from "grammy";
+import { Bot, Context } from "grammy";
 import { postMenfessInteraction } from "../interactions";
 import { isForwardedMenfessFromChannelToGroup } from "../interactions";
 import { botConfig } from "../utils/config";
@@ -8,8 +8,7 @@ import {
   generateUID,
   getFormattedDate,
 } from "../utils/helpers";
-import { isUserRegistered } from "../utils/services";
-import type { MenfessState } from "../utils/types";
+import type { BotContext, MenfessState } from "../utils/types";
 
 // User states for handling menfess messages
 const userStates = new Map<number, MenfessState>();
@@ -18,7 +17,7 @@ const userStates = new Map<number, MenfessState>();
  * Initialize post menfess handlers
  * @param bot The Telegram bot instance
  */
-export function initPostHandlers(bot: Bot): void {
+export function initPostHandlers(bot: Bot<BotContext>): void {
   // Post command handler (only use /post)
   bot.command("post", (ctx) => handlePostCommand(ctx));
 
@@ -89,6 +88,8 @@ export function initPostHandlers(bot: Bot): void {
           return;
         }
 
+        await postToChannel(ctx);
+
         // Confirm to the user
         await ctx.reply(
           "Your message has been posted anonymously! ✅\n" +
@@ -117,24 +118,6 @@ export async function handlePostCommand(ctx: Context): Promise<void> {
     await ctx.answerCallbackQuery();
   }
 
-  // Check if user is registered
-  const isRegistered = await isUserRegistered(userId);
-  if (!isRegistered) {
-    const keyboard = new InlineKeyboard().text(
-      "Register Now",
-      "start_registration"
-    );
-
-    await ctx.reply(
-      "You need to register before posting a menfess.\n\n" +
-        "Please register to unlock all features of this bot.",
-      {
-        reply_markup: keyboard,
-      }
-    );
-    return;
-  }
-
   // Set user state to waiting for content
   const message = await ctx.reply(
     `Please send your message. It will be posted anonymously to the channel.\n\n` +
@@ -154,13 +137,13 @@ export async function handlePostCommand(ctx: Context): Promise<void> {
  * @param ctx Bot context
  * @returns The sent message object
  */
-export async function postToChannel(ctx: Context) {
+export async function postToChannel(ctx: BotContext) {
   if (!ctx.message) {
     throw new Error("No message to post");
   }
 
   const userId = ctx.from?.id;
-  console.log("userId", userId);
+
   if (!userId) {
     throw new Error("User ID not found");
   }
@@ -212,7 +195,7 @@ export async function postToChannel(ctx: Context) {
     }
 
     console.log(
-      `Message posted to channel, channelChatId:${sentMessage?.message_id}, senderId: ${userId}, senderUserName: ${userName}`
+      `channelChatId:${sentMessage?.message_id} | senderId: ${userId} | senderUserName: ${userName} | Message posted to channel`
     );
 
     try {
@@ -223,10 +206,12 @@ export async function postToChannel(ctx: Context) {
         senderUserName: userName,
         createdAt: new Date(),
         interactUsers: [],
-        //senderAlias: todo
+        senderAlias: ctx.session.anonName,
       });
 
-      console.log("Message stored in Firestore with ID:", menfessUID);
+      console.log(
+        `channelChatId:${sentMessage?.message_id} | senderId: ${userId} | senderUserName: ${userName} | Message stored in Firestore with ID: ${menfessUID}`
+      );
     } catch (dbError) {
       console.error("Error saving to database:", dbError);
     }

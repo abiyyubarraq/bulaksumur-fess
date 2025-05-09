@@ -16,6 +16,10 @@ export const botConfig: BotConfig = {
     projectId: process.env.FIREBASE_PROJECT_ID || "bulaksumur-fess",
     useEmulator: process.env.FIREBASE_USE_EMULATOR === "true",
   },
+  botUserName: process.env.BOT_USER_NAME || "bulaksumurfessbot",
+  telegramAdminId: process.env.TELEGRAM_ADMIN_ID
+    ? Number(process.env.TELEGRAM_ADMIN_ID)
+    : 0,
 };
 
 // Validate config

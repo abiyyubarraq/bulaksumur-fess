@@ -145,6 +145,39 @@ export function formatDateFromTimestamp(timestamp?: any): string {
  * @returns Boolean indicating if email format is valid
  */
 export function isValidEmail(email: string): boolean {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const emailRegex = /^[^\s@]+@mail\.ugm\.ac\.id$/;
   return emailRegex.test(email);
+}
+
+/**
+ * Validate name format
+ * @param name The name string to validate
+ * @returns Boolean indicating if name format is valid
+ */
+export function isValidName(name: string): boolean {
+  const nameRegex = /^[a-zA-Z0-9]{5,15}$/;
+  return nameRegex.test(name);
+}
+
+/**
+ * Type-safe utility function to match callback data
+ */
+export function matchCallbackData(
+  pattern: RegExp,
+  data: string | undefined
+): RegExpMatchArray | null {
+  if (typeof data !== "string") return null;
+  return data.match(pattern);
+}
+
+/**
+ * Get a premium badge based on the premium status
+ * @param premiumStatus The premium status to get the badge for
+ * @returns A string containing the premium badge
+ */
+export function getPremiumBadge(premiumStatus: number | null): string {
+  if (premiumStatus === 1) return " 💎";
+  if (premiumStatus === 2) return " 💎💎";
+  if (premiumStatus === 3) return " 💎💎💎";
+  return "";
 }

@@ -1,6 +1,31 @@
-// Shared types for the application
-
 import type { Timestamp } from "firebase-admin/firestore";
+import type { SessionFlavor } from "grammy";
+import type { Context } from "grammy";
+
+export interface SessionData {
+  isRegistered: boolean;
+  anonName: string | null;
+  userId: number | null;
+  registeredAt: Date | null;
+  emailRegistered: string | null;
+  gender: "M" | "F" | null;
+  birthMonth: number | null;
+  birthYear: number | null;
+  registerStep:
+    | "anonName"
+    | "birthMonth"
+    | "birthYear"
+    | "gender"
+    | "email"
+    | "confirmData"
+    | "verifyEmail"
+    | "complete";
+  isBanned: boolean;
+  premiumStatus: 1 | 2 | 3 | null;
+  premiumUntil: Date | null;
+}
+
+export type BotContext = Context & SessionFlavor<SessionData>;
 
 // Message handler state type
 export type MenfessState = {
@@ -8,7 +33,6 @@ export type MenfessState = {
   messageToDelete?: number;
 };
 
-// Config interface
 export interface BotConfig {
   botToken: string;
   channelId: string;
@@ -20,6 +44,8 @@ export interface BotConfig {
     projectId?: string;
     useEmulator?: boolean;
   };
+  botUserName: string;
+  telegramAdminId: number;
 }
 
 // User session and registration status
@@ -37,7 +63,30 @@ export interface UserSession {
   lastActivity: Timestamp;
 }
 
-// Firestore document types
+export interface UserDbData {
+  userId: number;
+  username: string;
+  emailRegistered: string;
+  gender: "M" | "F";
+  birthMonth: number;
+  birthYear: number;
+  registerStep:
+    | "anonName"
+    | "birthMonth"
+    | "birthYear"
+    | "gender"
+    | "email"
+    | "confirmData"
+    | "verifyEmail"
+    | "complete";
+  isEmailVerified: boolean;
+  registeredAt: Timestamp;
+  anonName: string;
+  menfessCount: number;
+  premiumStatus: 1 | 2 | 3 | null;
+  premiumUntil: Timestamp | null;
+}
+
 export interface MenfessDbData {
   channelChatId: number;
   groupChatId: number;
@@ -45,10 +94,10 @@ export interface MenfessDbData {
   menfessUID: string;
   senderId: number;
   senderUserName: string;
-  interactUsers: number[];
+  interactUsers: { userId: number; interactAction: string }[];
 }
 
-export interface ReportDbData {
+export interface MenfessReportDbData {
   reporterId: number;
   reporterUsername: string;
   menfessUID: string;
@@ -58,23 +107,23 @@ export interface ReportDbData {
   createdAt: Timestamp;
 }
 
-// MenfessPost type represents a menfess post to be saved in Firestore
-export interface MenfessPost {
-  text: string;
-  userId: number;
-  username?: string;
-  messageId?: number;
-  photoFileId?: string;
-  timestamp?: Date | Timestamp;
-  isApproved?: boolean;
-}
+// // MenfessPost type represents a menfess post to be saved in Firestore
+// export interface MenfessPost {
+//   text: string;
+//   userId: number;
+//   username?: string;
+//   messageId?: number;
+//   photoFileId?: string;
+//   timestamp?: Date | Timestamp;
+//   isApproved?: boolean;
+// }
 
-// Interaction type for tracking user interactions with posts
-export interface Interaction {
-  userId: number;
-  username?: string;
-  postId: string;
-  messageId: number;
-  type: "like" | "dislike" | "report";
-  timestamp?: Date | Timestamp;
-}
+// // Interaction type for tracking user interactions with posts
+// export interface Interaction {
+//   userId: number;
+//   username?: string;
+//   postId: string;
+//   messageId: number;
+//   type: "like" | "dislike" | "report";
+//   timestamp?: Date | Timestamp;
+// }

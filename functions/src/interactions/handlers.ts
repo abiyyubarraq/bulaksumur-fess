@@ -3,14 +3,17 @@ import { Bot, Context, InlineKeyboard } from "grammy";
 import { botConfig } from "../utils/config";
 import { db } from "../utils/firebase";
 import { extractMenfessUID } from "../utils/helpers";
-import type { MenfessDbData } from "../utils/types";
+import type { BotContext, MenfessDbData } from "../utils/types";
 
 /**
  * Post menfess interaction
  * @param ctx The context object
  * @param bot The bot instance
  */
-export async function postMenfessInteraction(ctx: Context, bot: Bot) {
+export async function postMenfessInteraction(
+  ctx: Context,
+  bot: Bot<BotContext>
+) {
   const keyboard = new InlineKeyboard()
     .text("👊 Hit Me!", "hitme")
     .text("🕵️ Who?", "who")
@@ -30,7 +33,7 @@ export async function postMenfessInteraction(ctx: Context, bot: Bot) {
       });
 
       console.log(
-        `Added interaction buttons to groupChatId: ${ctx.message?.message_id}`
+        `groupChatId: ${ctx.message?.message_id} | Added interaction buttons to menfess`
       );
     }
   } catch (error) {
@@ -55,7 +58,7 @@ export function isForwardedMenfessFromChannelToGroup(ctx: Context): boolean {
  * Initialize interaction handlers
  * @param bot The Telegram bot instance
  */
-export function initInteractionHandlers(bot: Bot): void {
+export function initInteractionHandlers(bot: Bot<BotContext>): void {
   bot.callbackQuery(["hitme", "who", "talk", "report"], async (ctx) => {
     const action = ctx.callbackQuery.data;
     const userId = ctx.from?.id;
@@ -75,10 +78,6 @@ export function initInteractionHandlers(bot: Bot): void {
       return;
     }
 
-    console.log(
-      `Interaction executed: ${action} on message groupChatId: ${menfessOnGroupId}, menfessUID: ${mmenfessUID} | by userId: ${userId} userName: ${userName}`
-    );
-
     const menfessDbData = await db
       .collection("menfess")
       .doc(mmenfessUID)
@@ -96,7 +95,7 @@ export function initInteractionHandlers(bot: Bot): void {
       );
       return;
     }
-    if (menfessDbData.interactUsers.includes(userId)) {
+    if (menfessDbData.interactUsers.some((user) => user.userId === userId)) {
       await ctx.answerCallbackQuery(
         "You have already interacted with this menfess"
       );
@@ -122,7 +121,7 @@ export function initInteractionHandlers(bot: Bot): void {
       );
       await ctx.answerCallbackQuery("Your request sent to user");
     } else if (action === "report") {
-      await db.collection("reports").add({
+      await db.collection("menfessReports").add({
         reporterId: userId,
         reporterUsername: userName,
         menfessUID: mmenfessUID,
@@ -137,12 +136,17 @@ export function initInteractionHandlers(bot: Bot): void {
         "Your report has been sent to the admin 🫡"
       );
     }
-
+    console.log(
+      `groupChatId: ${menfessOnGroupId} | menfessUID: ${mmenfessUID} | by userId: ${userId} | userName: ${userName} | Interaction executed: ${action} `
+    );
     await db
       .collection("menfess")
       .doc(mmenfessUID)
       .update({
-        interactUsers: FieldValue.arrayUnion(userId),
+        interactUsers: FieldValue.arrayUnion({
+          userId: userId,
+          interactAction: action,
+        }),
       });
   });
 }
