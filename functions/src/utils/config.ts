@@ -20,6 +20,8 @@ export const botConfig: BotConfig = {
   telegramAdminId: process.env.TELEGRAM_ADMIN_ID
     ? Number(process.env.TELEGRAM_ADMIN_ID)
     : 0,
+  adminBaseUserName: process.env.ADMIN_BASE || "crtyptockl",
+  moderatorBaseUserName: process.env.MODERATOR_BASE || "crtyptockl",
 };
 
 // Validate config

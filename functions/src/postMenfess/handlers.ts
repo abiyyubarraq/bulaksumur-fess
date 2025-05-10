@@ -1,3 +1,4 @@
+import { FieldValue } from "firebase-admin/firestore";
 import { Bot, InlineKeyboard } from "grammy";
 import moment from "moment";
 import { postMenfessInteraction } from "../interactions";
@@ -8,11 +9,16 @@ import {
   containsTrigger,
   generateUID,
   getFormattedDate,
+  isValidMessage,
 } from "../utils/helpers";
-import type { BotContext, MenfessState } from "../utils/types";
+import type {
+  BotContext,
+  ListenMenfessState,
+  MenfessDbData,
+} from "../utils/types";
 
 // User states for handling menfess messages
-const userStates = new Map<number, MenfessState>();
+const userStates = new Map<number, ListenMenfessState>();
 
 const waitingForMenfessMessage =
   `Balas dengan isi Menfess Kamu\n\n` +
@@ -56,8 +62,10 @@ export function initPostHandlers(bot: Bot<BotContext>): void {
           messageText = ctx.message.caption;
         }
 
-        // If the message doesn't contain the trigger word, reject it
-        if (!containsTrigger(messageText, botConfig.postTrigger)) {
+        if (
+          !containsTrigger(messageText, botConfig.postTrigger) &&
+          !isValidMessage(messageText)
+        ) {
           const keyboard = new InlineKeyboard();
           keyboard.text("« BACK", "back_to_start_post_menu");
           const sentMessage = await ctx.reply(waitingForMenfessMessage, {
@@ -70,12 +78,26 @@ export function initPostHandlers(bot: Bot<BotContext>): void {
           return;
         }
 
-        await postToChannel(ctx);
+        const channelPostMessage = await postToChannel(ctx);
 
-        // Confirm to the user
+        const keyboard = new InlineKeyboard();
+        keyboard
+          .text("❌ Unsent", `unsent_menfess_${channelPostMessage?.menfessUID}`)
+          .url(
+            "🔗 Menfess",
+            `t.me/${botConfig.channelId.replace("@", "")}/${channelPostMessage?.sentMessage?.message_id}`
+          );
         await ctx.reply(
-          "Your message has been posted anonymously! ✅\n" +
-            "You can send another menfess by using /post."
+          `🎊 Yeay! @${ctx.from?.username} Menfess kamu berhasil dikirim! 🎉\n\n` +
+            `✨ *Menfess kamu:* ✨\n\n"${messageText}"\n\n` +
+            `📅 Pada tanggal ${getFormattedDate()} 📅\n\n` +
+            "🔗 Kamu bisa melihat menfess kamu di link dibawah ini ⬇️\n\n" +
+            `📢 Channel Base: @${botConfig.channelId.replace("@", "")}\n` +
+            `👨‍💼 Admin Base: @${botConfig.adminBaseUserName}\n` +
+            `👮‍♂️ Moderator Base: @${botConfig.moderatorBaseUserName}\n`,
+          {
+            reply_markup: keyboard,
+          }
         );
         ctx.session.lastPostMenfess = new Date();
       } catch (error) {
@@ -87,6 +109,109 @@ export function initPostHandlers(bot: Bot<BotContext>): void {
     } else {
       await next();
       return;
+    }
+  });
+
+  bot.callbackQuery(/^unsent_menfess_(.+)$/, async (ctx) => {
+    const menfessIdMatch = ctx.callbackQuery.data.match(
+      /^unsent_menfess_(.+)$/
+    );
+    if (!menfessIdMatch || !menfessIdMatch[1]) {
+      await ctx.answerCallbackQuery({
+        text: "Menfess ID not found",
+        show_alert: true,
+      });
+      return;
+    }
+
+    const menfessId = menfessIdMatch[1];
+    const menfessDbData = await db.collection("menfess").doc(menfessId).get();
+    if (!menfessDbData.exists) {
+      await ctx.answerCallbackQuery({
+        text: "Menfess not found",
+        show_alert: true,
+      });
+      return;
+    }
+    const menfessData = menfessDbData.data() as MenfessDbData;
+
+    const menfessText =
+      ctx.update?.callback_query?.message?.text?.match(
+        /✨\n\n"(.+?)"\n\n/
+      )?.[1];
+
+    const sentDateStringFormatted =
+      ctx.update?.callback_query?.message?.text?.match(
+        /📅 Pada tanggal (.+?) 📅/
+      )?.[1] || "";
+
+    if (!sentDateStringFormatted) {
+      await ctx.answerCallbackQuery({
+        text: "Menfess tidak ditemukan",
+        show_alert: true,
+      });
+      return;
+    }
+
+    const sentDate = moment(
+      sentDateStringFormatted,
+      "dddd, D MMMM YYYY [pukul] HH.mm",
+      "id"
+    );
+
+    if (moment().isBefore(sentDate.clone().add(30, "seconds"))) {
+      const secondsLeft = moment
+        .duration(sentDate.clone().add(30, "seconds").diff(moment()))
+        .asSeconds()
+        .toFixed(0);
+      await ctx.answerCallbackQuery({
+        text: `Silahkan menunggu ${secondsLeft} detik lagi untuk menghapus menfess`,
+        show_alert: true,
+      });
+      return;
+    }
+
+    if (moment().isAfter(sentDate.clone().add(60, "minutes"))) {
+      await ctx.answerCallbackQuery({
+        text: "Tidak bisa menghapus menfess, sudah melewati batas waktu penghapusan (1 jam)",
+        show_alert: true,
+      });
+      return;
+    }
+
+    try {
+      if (menfessData.groupChatButtonId) {
+        await ctx.api.deleteMessage(
+          botConfig.groupChatId,
+          menfessData.groupChatButtonId
+        );
+      }
+
+      if (menfessData.groupChatId) {
+        await ctx.api.deleteMessage(
+          botConfig.groupChatId,
+          menfessData.groupChatId
+        );
+      }
+
+      if (menfessData.channelChatId) {
+        await ctx.api.deleteMessage(
+          botConfig.channelId,
+          menfessData.channelChatId
+        );
+      }
+
+      await db.collection("menfess").doc(menfessId).delete();
+      await ctx.editMessageText(
+        `✅ Sukses menghapus menfess: "${menfessText || menfessId}"`,
+        { parse_mode: "HTML" }
+      );
+    } catch (error) {
+      console.error(`Error deleting menfess: ${error}`);
+      await ctx.answerCallbackQuery({
+        text: "Gagal menghapus menfess. Coba lagi nanti.",
+        show_alert: true,
+      });
     }
   });
 }
@@ -101,9 +226,7 @@ export async function startPostMenfessListener(ctx: BotContext): Promise<void> {
     moment(ctx.session.lastPostMenfess).isAfter(moment().subtract(5, "minutes"))
   ) {
     await ctx.deleteMessage();
-    await ctx.reply(
-      "You can only send menfess once per 5 minutes. Please try again later."
-    );
+    await ctx.reply("Kamu hanya bisa mengirim menfess sekali dalam 5 menit.");
     return;
   }
 
@@ -203,7 +326,12 @@ export async function postToChannel(ctx: BotContext) {
         interactUsers: [],
         senderAlias: ctx.session.anonName,
       });
-
+      await db
+        .collection("users")
+        .doc(userId.toString())
+        .update({
+          menfessCount: FieldValue.increment(1),
+        });
       console.log(
         `channelChatId:${sentMessage?.message_id} | senderId: ${userId} | senderUserName: ${userName} | Message stored in Firestore with ID: ${menfessUID}`
       );
@@ -211,7 +339,7 @@ export async function postToChannel(ctx: BotContext) {
       console.error("Error saving to database:", dbError);
     }
 
-    return sentMessage;
+    return { sentMessage, menfessUID };
   } catch (error) {
     console.error("Error sending message to channel:", error);
     throw error;

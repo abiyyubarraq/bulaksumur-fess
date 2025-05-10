@@ -25,17 +25,18 @@ export interface SessionData {
   premiumUntil: Date | null;
   lastSendFeedback: Date | null;
   lastPostMenfess: Date | null;
+  lastUserUpdatedDataWithDb: Date | null;
 }
 
 export type BotContext = Context & SessionFlavor<SessionData>;
 
 // Message handler state type
-export type MenfessState = {
+export type ListenMenfessState = {
   waitingForContent: boolean;
   messageToDelete?: number;
 };
 
-export type FeedbackState = MenfessState & {
+export type ListenFeedbackState = ListenMenfessState & {
   feedBackType: "kritik" | "saran" | "laporan";
 };
 
@@ -52,21 +53,8 @@ export interface BotConfig {
   };
   botUserName: string;
   telegramAdminId: number;
-}
-
-// User session and registration status
-export enum SessionStatus {
-  NOT_REGISTERED = "not_registered",
-  REGISTERED = "registered",
-  REGISTRATION_IN_PROGRESS = "registration_in_progress",
-}
-
-export interface UserSession {
-  userId: number;
-  username?: string;
-  status: SessionStatus;
-  registeredAt?: Timestamp;
-  lastActivity: Timestamp;
+  adminBaseUserName: string;
+  moderatorBaseUserName: string;
 }
 
 export interface UserDbData {
@@ -100,7 +88,8 @@ export interface MenfessDbData {
   menfessUID: string;
   senderId: number;
   senderUserName: string;
-  interactUsers: { userId: number; interactAction: string }[];
+  interactUsers: { userId: number; action: string }[];
+  groupChatButtonId: number;
 }
 
 export interface MenfessReportDbData {
@@ -112,24 +101,3 @@ export interface MenfessReportDbData {
   menfessSenderUsername: string;
   createdAt: Timestamp;
 }
-
-// // MenfessPost type represents a menfess post to be saved in Firestore
-// export interface MenfessPost {
-//   text: string;
-//   userId: number;
-//   username?: string;
-//   messageId?: number;
-//   photoFileId?: string;
-//   timestamp?: Date | Timestamp;
-//   isApproved?: boolean;
-// }
-
-// // Interaction type for tracking user interactions with posts
-// export interface Interaction {
-//   userId: number;
-//   username?: string;
-//   postId: string;
-//   messageId: number;
-//   type: "like" | "dislike" | "report";
-//   timestamp?: Date | Timestamp;
-// }

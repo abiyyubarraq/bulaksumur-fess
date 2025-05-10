@@ -39,8 +39,8 @@ export function initSessionModule(bot: Bot<BotContext>): void {
       return;
     }
 
-    if (!ctx.session.isRegistered) {
-      // check is user on banned list coll
+    if (!ctx.session.isRegistered || !ctx.session.lastUserUpdatedDataWithDb) {
+      // check is user on banned list collection
       const bannedUserDoc = await db
         .collection("bannedUsers")
         .doc(userId.toString())
@@ -67,6 +67,7 @@ export function initSessionModule(bot: Bot<BotContext>): void {
           ctx.session.userId = userId;
           ctx.session.premiumStatus = userData.premiumStatus;
           ctx.session.premiumUntil = userData.premiumUntil?.toDate() || null;
+          ctx.session.lastUserUpdatedDataWithDb = new Date();
           await next();
           return;
         }

@@ -2,9 +2,9 @@ import { Bot, InlineKeyboard } from "grammy";
 import moment from "moment";
 import { db } from "../utils/firebase";
 import { isValidMessage, sanitizeMessage } from "../utils/helpers";
-import type { BotContext, FeedbackState } from "../utils/types";
+import type { BotContext, ListenFeedbackState } from "../utils/types";
 
-const userStates = new Map<number, FeedbackState>();
+const userStates = new Map<number, ListenFeedbackState>();
 
 const waitingForFeedbackMessage = (feedBackType: string) =>
   `Silahkan balas ke pesan ini dengan ${feedBackType} kamu!` +
@@ -27,7 +27,6 @@ export function initSendFeedbackHandlers(bot: Bot<BotContext>): void {
       userStates.delete(userId);
 
       try {
-        // Delete the waiting message if it exists
         if (state.messageToDelete) {
           try {
             await ctx.api.deleteMessage(ctx.chat.id, state.messageToDelete);
@@ -57,17 +56,19 @@ export function initSendFeedbackHandlers(bot: Bot<BotContext>): void {
         }
 
         await db
-          .collection("feedback")
+          .collection("feedbacks")
           .doc()
           .set({
             userId: userId,
+            username: ctx.from?.username || "",
             message: sanitizeMessage(messageText),
             feedbackType: state.feedBackType,
             createdAt: new Date(),
+            isRead: false,
           });
         await ctx.reply(
-          "Thank you for your feedback! ✅\n" +
-            "We will review your feedback and get back to you as soon as possible."
+          "🙏 Thankyouu feedbacknya! ✨\n" +
+            "Nanti tak baca yakk kalo lagi nganggur, 💝 luvv yu! 🤗"
         );
         ctx.session.lastSendFeedback = new Date();
       } catch (error) {
@@ -90,11 +91,11 @@ export function initSendFeedbackHandlers(bot: Bot<BotContext>): void {
  */
 export async function startSendFeedBackListener(
   ctx: BotContext,
-  feedBackType: FeedbackState["feedBackType"]
+  feedBackType: ListenFeedbackState["feedBackType"]
 ) {
   if (
     ctx.session.lastSendFeedback &&
-    moment(ctx.session.lastSendFeedback).isAfter(moment().subtract(12, "hours"))
+    moment().diff(moment(ctx.session.lastSendFeedback), "hours") < 12
   ) {
     await ctx.deleteMessage();
     await ctx.reply(

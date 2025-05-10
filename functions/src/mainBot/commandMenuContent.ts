@@ -17,7 +17,7 @@ export async function sendMainMenu(ctx: BotContext) {
     .text("Profile 👤", "view_profile")
     .text("Inbox 📬", "view_inbox")
     .row()
-    .text("Riwayat 🌟", "view_history")
+    // .text("Riwayat 🌟", "view_history")
     .text("Beli 🛒", "purchase_premium")
     .row()
     .text("Bantuan ❓", "get_help")

@@ -22,14 +22,19 @@ export async function postMenfessInteraction(
     .text("🚫 Report", "report");
 
   try {
-    await bot.api.sendMessage(botConfig.groupChatId, "💬 INTERAKSI MENFESS", {
-      reply_to_message_id: ctx.message?.message_id,
-      reply_markup: keyboard,
-    });
+    const interactionButton = await bot.api.sendMessage(
+      botConfig.groupChatId,
+      "💬 INTERAKSI MENFESS",
+      {
+        reply_to_message_id: ctx.message?.message_id,
+        reply_markup: keyboard,
+      }
+    );
     const UIDFromMenfess = extractMenfessUID(ctx.message?.text);
     if (UIDFromMenfess) {
       await db.collection("menfess").doc(UIDFromMenfess).update({
         groupChatId: ctx.message?.message_id,
+        groupChatButtonId: interactionButton.message_id,
       });
 
       console.log(
@@ -50,7 +55,8 @@ export function isForwardedMenfessFromChannelToGroup(ctx: BotContext): boolean {
   return Boolean(
     ctx.senderChat?.id === botConfig.channelGroupChatIdNumber &&
       ctx.chat?.id === botConfig.groupChatIdNumber &&
-      ctx.message?.message_id
+      ctx.message?.message_id &&
+      extractMenfessUID(ctx.message.text)
   );
 }
 
@@ -65,7 +71,10 @@ export function initInteractionHandlers(bot: Bot<BotContext>): void {
     const userName = ctx.from?.username;
 
     if (!userId) {
-      await ctx.answerCallbackQuery("User ID not found");
+      await bot.api.answerCallbackQuery(ctx.callbackQuery.id, {
+        show_alert: true,
+        text: "User ID not found",
+      });
       return;
     }
 
@@ -74,7 +83,10 @@ export function initInteractionHandlers(bot: Bot<BotContext>): void {
     const menfessOnGroupText = menfessOnGroup?.text;
     const mmenfessUID = extractMenfessUID(menfessOnGroupText);
     if (!menfessOnGroupId || !mmenfessUID) {
-      await ctx.answerCallbackQuery("Cannot find the original message");
+      await bot.api.answerCallbackQuery(ctx.callbackQuery.id, {
+        show_alert: true,
+        text: "Cannot find the original message",
+      });
       return;
     }
 
@@ -86,19 +98,24 @@ export function initInteractionHandlers(bot: Bot<BotContext>): void {
         return doc.data() as MenfessDbData | undefined;
       });
     if (!menfessDbData) {
-      await ctx.answerCallbackQuery("Cannot find the original message");
+      await bot.api.answerCallbackQuery(ctx.callbackQuery.id, {
+        show_alert: true,
+        text: "Cannot find the original message",
+      });
       return;
     }
     if (menfessDbData.senderId === userId) {
-      await ctx.answerCallbackQuery(
-        "You cannot interact with your own menfess"
-      );
+      await bot.api.answerCallbackQuery(ctx.callbackQuery.id, {
+        show_alert: true,
+        text: "You cannot interact with your own menfess",
+      });
       return;
     }
     if (menfessDbData.interactUsers.some((user) => user.userId === userId)) {
-      await ctx.answerCallbackQuery(
-        "You have already interacted with this menfess"
-      );
+      await bot.api.answerCallbackQuery(ctx.callbackQuery.id, {
+        show_alert: true,
+        text: "You have already interacted with this menfess",
+      });
       return;
     }
 
@@ -107,19 +124,19 @@ export function initInteractionHandlers(bot: Bot<BotContext>): void {
         menfessDbData.senderId,
         `Someone hit your menfess! 👊\n\nYour post: ${menfessOnGroupText}`
       );
-      await ctx.answerCallbackQuery("Your request sent to user");
+      await ctx.answerCallbackQuery("❤️ Your request sent to user");
     } else if (action === "who") {
       await ctx.api.sendMessage(
         menfessDbData.senderId,
         `Someone asked who hit your menfess! 👊\n\nYour post: ${menfessOnGroupText}`
       );
-      await ctx.answerCallbackQuery("Your request sent to user");
+      await ctx.answerCallbackQuery("❤️ Your request sent to user");
     } else if (action === "talk") {
       await ctx.api.sendMessage(
         menfessDbData.senderId,
         `Someone wants to talk about this menfess! 💬\n\nYour post: ${menfessOnGroupText}`
       );
-      await ctx.answerCallbackQuery("Your request sent to user");
+      await ctx.answerCallbackQuery("❤️ Your request sent to user");
     } else if (action === "report") {
       await db.collection("menfessReports").add({
         reporterId: userId,
@@ -145,7 +162,7 @@ export function initInteractionHandlers(bot: Bot<BotContext>): void {
       .update({
         interactUsers: FieldValue.arrayUnion({
           userId: userId,
-          interactAction: action,
+          action: action,
         }),
       });
   });
