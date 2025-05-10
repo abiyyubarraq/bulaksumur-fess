@@ -2,6 +2,7 @@ import { Bot, session } from "grammy";
 import { initInteractionHandlers } from "../interactions";
 import { initPostHandlers } from "../postMenfess";
 import { initSessionModule } from "../registerSessions";
+import { initSendFeedbackHandlers } from "../sendFeedback";
 import { botConfig } from "../utils/config";
 import type { BotContext, SessionData } from "../utils/types";
 import { initCommands } from "./commands";
@@ -26,9 +27,12 @@ export function createBot(): Bot<BotContext> {
       isBanned: false,
       premiumStatus: null,
       premiumUntil: null,
+      lastSendFeedback: null,
+      lastPostMenfess: null,
     };
   }
   bot.use(session({ initial }));
+
   bot.api.setMyCommands([
     {
       command: "/menu",
@@ -39,7 +43,7 @@ export function createBot(): Bot<BotContext> {
       description: "Bantuan Penggunaan Bot",
     },
     {
-      command: "/rule",
+      command: "/rules",
       description: "Peraturan Base",
     },
   ]);
@@ -48,6 +52,7 @@ export function createBot(): Bot<BotContext> {
   initCommands(bot);
   initPostHandlers(bot);
   initInteractionHandlers(bot);
+  initSendFeedbackHandlers(bot);
 
   bot.catch((err) => {
     console.error("Bot error occurred:", err);

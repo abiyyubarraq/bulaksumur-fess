@@ -1,4 +1,5 @@
 import { InlineKeyboard } from "grammy";
+import moment from "moment";
 import { botConfig } from "../utils/config";
 import { MONTH_NAMES } from "../utils/constants";
 import { getPremiumBadge } from "../utils/helpers";
@@ -42,8 +43,8 @@ export async function sendMainMenu(ctx: BotContext) {
     // `⚡ Score : ${1000}\n` +
     // `💰 Gold : ${2000}\n\n` +
     `🆔 ID : ${userId}\n` +
-    `⏱️ Join time : ${ctx.session.registeredAt ? new Date(ctx.session.registeredAt).toLocaleString("id-ID", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "-"}\n\n` +
-    `📅 Premium until : ${ctx.session.premiumUntil ? new Date(ctx.session.premiumUntil).toLocaleString("id-ID", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "-"}\n\n` +
+    `⏱️ Join time : ${ctx.session.registeredAt ? moment(ctx.session.registeredAt).format("DD/MM/YYYY HH:mm") : "-"}\n\n` +
+    `📅 Premium until : ${ctx.session.premiumUntil ? moment(ctx.session.premiumUntil).format("DD/MM/YYYY HH:mm") : "-"}\n\n` +
     `👪 Channel Base: @${botConfig.channelId.replace("@", "")}`;
 
   if (ctx.callbackQuery) {
@@ -64,23 +65,33 @@ export async function sendHelpMenu(ctx: BotContext) {
   await ctx.reply(
     "Bulaksumur Menfess Bot Commands:\n\n" +
       "/menu - Get the main menu\n" +
-      `/post - Create a new anonymous post (must include "${botConfig.postTrigger}" in the message)\n` +
-      "/cancel - Cancel current operation\n" +
-      "/profile - View your user profile\n" +
       "/help - Show this help message\n\n" +
-      `You can send text, or photos for your menfess posts. All posts must include the word "${botConfig.postTrigger}".\n\n` +
-      "All posts will be sent to the channel and duplicated in the group chat where members can interact with them using the provided buttons."
+      "/rules - Show the rules\n"
   );
 }
 export async function sendStartPostMenu(ctx: BotContext) {
   const keyboard = new InlineKeyboard();
   keyboard
     .text("Menfess 🔮", "post_menfess")
-    .text("Anon Message 📝", "post_anon_message")
+    .text("Anon Message 📝", "send_anon_message")
     .row()
     .text("« BACK", "back_to_main_menu");
 
   await ctx.editMessageText("Kamu ingin mengirim apa di Bulaksumur Base?", {
+    reply_markup: keyboard,
+  });
+}
+
+export async function sendReportFeedbackMenu(ctx: BotContext) {
+  const keyboard = new InlineKeyboard();
+  keyboard
+    .text("Kritik 💭", "send_kritik")
+    .text("Saran 💡", "send_saran")
+    .text("Lapor ⚠️", "send_lapor")
+    .row()
+    .text("« BACK", "back_to_main_menu");
+
+  await ctx.editMessageText("Apa hal yang ingin kamu sampaikan?", {
     reply_markup: keyboard,
   });
 }

@@ -1,5 +1,5 @@
 import { FieldValue } from "firebase-admin/firestore";
-import { Bot, Context, InlineKeyboard } from "grammy";
+import { Bot, InlineKeyboard } from "grammy";
 import { botConfig } from "../utils/config";
 import { db } from "../utils/firebase";
 import { extractMenfessUID } from "../utils/helpers";
@@ -11,7 +11,7 @@ import type { BotContext, MenfessDbData } from "../utils/types";
  * @param bot The bot instance
  */
 export async function postMenfessInteraction(
-  ctx: Context,
+  ctx: BotContext,
   bot: Bot<BotContext>
 ) {
   const keyboard = new InlineKeyboard()
@@ -46,7 +46,7 @@ export async function postMenfessInteraction(
  * @param ctx The context object
  * @returns True if the message is forwarded from the channel to the group, false otherwise
  */
-export function isForwardedMenfessFromChannelToGroup(ctx: Context): boolean {
+export function isForwardedMenfessFromChannelToGroup(ctx: BotContext): boolean {
   return Boolean(
     ctx.senderChat?.id === botConfig.channelGroupChatIdNumber &&
       ctx.chat?.id === botConfig.groupChatIdNumber &&

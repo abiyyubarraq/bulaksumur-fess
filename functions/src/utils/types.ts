@@ -23,6 +23,8 @@ export interface SessionData {
   isBanned: boolean;
   premiumStatus: 1 | 2 | 3 | null;
   premiumUntil: Date | null;
+  lastSendFeedback: Date | null;
+  lastPostMenfess: Date | null;
 }
 
 export type BotContext = Context & SessionFlavor<SessionData>;
@@ -31,6 +33,10 @@ export type BotContext = Context & SessionFlavor<SessionData>;
 export type MenfessState = {
   waitingForContent: boolean;
   messageToDelete?: number;
+};
+
+export type FeedbackState = MenfessState & {
+  feedBackType: "kritik" | "saran" | "laporan";
 };
 
 export interface BotConfig {

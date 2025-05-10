@@ -1,4 +1,5 @@
-import { Bot, Context, InlineKeyboard } from "grammy";
+import { Bot, InlineKeyboard } from "grammy";
+import moment from "moment";
 import { postMenfessInteraction } from "../interactions";
 import { isForwardedMenfessFromChannelToGroup } from "../interactions";
 import { botConfig } from "../utils/config";
@@ -24,10 +25,10 @@ const waitingForMenfessMessage =
  * @param bot The Telegram bot instance
  */
 export function initPostHandlers(bot: Bot<BotContext>): void {
-  bot.on(["message:text", "message:photo"], async (ctx) => {
+  bot.on(["message:text", "message:photo"], async (ctx, next) => {
     const userId = ctx.from?.id;
-
     if (!userId) return;
+
     if (isForwardedMenfessFromChannelToGroup(ctx)) {
       await postMenfessInteraction(ctx, bot);
       return;
@@ -69,19 +70,23 @@ export function initPostHandlers(bot: Bot<BotContext>): void {
           return;
         }
 
-        // await postToChannel(ctx);
+        await postToChannel(ctx);
 
         // Confirm to the user
         await ctx.reply(
           "Your message has been posted anonymously! ✅\n" +
             "You can send another menfess by using /post."
         );
+        ctx.session.lastPostMenfess = new Date();
       } catch (error) {
         console.error("Error posting message:", error);
         await ctx.reply(
           "Sorry, there was an error posting your message. Please try again later."
         );
       }
+    } else {
+      await next();
+      return;
     }
   });
 }
@@ -90,7 +95,18 @@ export function initPostHandlers(bot: Bot<BotContext>): void {
  * Handle post command
  * @param ctx Bot context
  */
-export async function handlePostCommand(ctx: Context): Promise<void> {
+export async function startPostMenfessListener(ctx: BotContext): Promise<void> {
+  if (
+    ctx.session.lastPostMenfess &&
+    moment(ctx.session.lastPostMenfess).isAfter(moment().subtract(5, "minutes"))
+  ) {
+    await ctx.deleteMessage();
+    await ctx.reply(
+      "You can only send menfess once per 5 minutes. Please try again later."
+    );
+    return;
+  }
+
   const userId = ctx.from?.id;
   if (!userId) return;
 

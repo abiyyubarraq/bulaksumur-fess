@@ -1,3 +1,7 @@
-import { handlePostCommand, initPostHandlers, postToChannel } from "./handlers";
+import {
+  initPostHandlers,
+  postToChannel,
+  startPostMenfessListener,
+} from "./handlers";
 
-export { postToChannel, handlePostCommand, initPostHandlers };
+export { postToChannel, startPostMenfessListener, initPostHandlers };

@@ -181,3 +181,38 @@ export function getPremiumBadge(premiumStatus: number | null): string {
   if (premiumStatus === 3) return " 💎💎💎";
   return "";
 }
+
+/**
+ * Check if a message meets safety and length requirements
+ * @param message The message to validate
+ * @returns Boolean indicating if message is valid
+ */
+export function isValidMessage(message: string): boolean {
+  // Check minimum length of 32 characters
+  if (message.length < 32) {
+    return false;
+  }
+
+  // Check for ASCII characters only
+  const asciiRegex = /^[\x20-\x7E\n]+$/;
+  if (!asciiRegex.test(message)) {
+    return false;
+  }
+
+  return true;
+}
+
+/**
+ * Sanitize a message by removing non-alphanumeric characters and trimming whitespace
+ * @param message The message to sanitize
+ * @returns A sanitized message
+ */
+export function sanitizeMessage(message: string): string {
+  // Remove excessive whitespace and newlines
+  const trimmed = message.replace(/\s+/g, " ").trim();
+
+  // Remove any control characters
+  const sanitized = trimmed.replace(/[\x00-\x1F\x7F-\x9F]/g, "");
+
+  return sanitized;
+}
