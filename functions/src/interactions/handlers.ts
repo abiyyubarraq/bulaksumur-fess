@@ -1,5 +1,6 @@
 import { FieldValue } from "firebase-admin/firestore";
 import { Bot, InlineKeyboard } from "grammy";
+import moment from "moment";
 import { botConfig } from "../utils/config";
 import { db } from "../utils/firebase";
 import { extractMenfessUID } from "../utils/helpers";
@@ -119,16 +120,57 @@ export function initInteractionHandlers(bot: Bot<BotContext>): void {
       return;
     }
 
+    if (moment().diff(ctx.session.lastSentInteract, "minutes") < 1) {
+      await bot.api.answerCallbackQuery(ctx.callbackQuery.id, {
+        show_alert: true,
+        text: "Sabar ya, kamu baru saja mengirim interaksi sebelumnya. Tunggu 1 menit lagi ya!",
+      });
+      return;
+    }
+
     if (action === "hitme") {
+      const keyboard = new InlineKeyboard()
+        .text(
+          "🥂 Chat Me!",
+          `response_interact_chat_me_${menfessDbData.channelChatId}_${userId}`
+        )
+        .url("🕵️ Profile?", `https://t.me/${userName}`)
+        .row()
+        .url(
+          "🔗 Menfess",
+          `t.me/${botConfig.channelId.replace("@", "")}/${menfessDbData.channelChatId}`
+        );
+
       await ctx.api.sendMessage(
         menfessDbData.senderId,
-        `Someone hit your menfess! 👊\n\nYour post: ${menfessOnGroupText}`
+        `✨ *Hallooo!* ✨\n\n` +
+          `🎉 Seseorang tertarik dengan menfess kamu! 💫\n\n` +
+          `📝 Menfess kamu:\n\n` +
+          `❝${menfessOnGroupText}❞\n\n` +
+          `💝 Cek profilnya di bawah ini! 👇`,
+        { reply_markup: keyboard }
       );
       await ctx.answerCallbackQuery("❤️ Your request sent to user");
     } else if (action === "who") {
+      const keyboard = new InlineKeyboard()
+        .text(
+          "🫗 Spill Me!",
+          `response_interact_spill_me_${menfessDbData.channelChatId}_${userId}`
+        )
+        .url(
+          "🔗 Menfess",
+          `t.me/${botConfig.channelId.replace("@", "")}/${menfessDbData.channelChatId}`
+        )
+        .row();
+
       await ctx.api.sendMessage(
         menfessDbData.senderId,
-        `Someone asked who hit your menfess! 👊\n\nYour post: ${menfessOnGroupText}`
+        `✨ *Heyy!* ✨\n\n` +
+          `🔍 Seseorang penasaran dan ingin mengetahui siapa yang mengirim menfess ini! 🤔\n\n` +
+          `📝 *Menfess kamu:*\n\n` +
+          `❝${menfessOnGroupText}❞\n\n` +
+          `💫 Apakah kamu ingin memberi tahu identitasmu? 👀`,
+        { reply_markup: keyboard }
       );
       await ctx.answerCallbackQuery("❤️ Your request sent to user");
     } else if (action === "talk") {
@@ -165,5 +207,69 @@ export function initInteractionHandlers(bot: Bot<BotContext>): void {
           action: action,
         }),
       });
+    ctx.session.lastSentInteract = new Date();
+  });
+
+  const handleInteractionResponse = async (ctx: BotContext, type: string) => {
+    const senderMenfessId = ctx.from?.id;
+    const senderMenfessUsername = ctx.from?.username;
+    const interactReqData = ctx.callbackQuery?.data?.match(
+      new RegExp(`^response_interact_${type}_(.+)$`)
+    );
+
+    if (!interactReqData || !interactReqData[1]) {
+      await ctx.answerCallbackQuery({
+        text: "Cant find menfess data",
+        show_alert: true,
+      });
+      return;
+    }
+
+    const [channelChatId, userInteractId] = interactReqData[1].split("_");
+
+    if (!channelChatId || !userInteractId) {
+      await ctx.answerCallbackQuery({
+        text: "Cant find menfess data",
+        show_alert: true,
+      });
+      return;
+    }
+
+    const keyboard = new InlineKeyboard()
+      .url(
+        `👤 Sender`,
+        `https://t.me/${senderMenfessUsername}/${senderMenfessId}`
+      )
+      .url(
+        "Menfess",
+        `https://t.me/${botConfig.channelId.replace("@", "")}/${channelChatId}`
+      )
+      .row();
+
+    const messages = {
+      chat_me:
+        "User dari menfess yang kamu hit ingin berbicara dengan kamu! ❤️\n\n",
+      spill_me:
+        "User dari menfess yang kamu hit setuju untuk ngespill profilenya ke kamu! 🫗\n\n",
+    };
+
+    await ctx.api.sendMessage(
+      userInteractId,
+      messages[type as keyof typeof messages] +
+        `Silahkan klik tombol dibawah untuk langsung ke profile sender!`,
+      { reply_markup: keyboard }
+    );
+
+    await ctx.editMessageText(
+      `Jawaban kamu sudah dikirim ke user yang tertarik dengan menfess kamu! 📤`
+    );
+  };
+
+  bot.callbackQuery(/^response_interact_chat_me_(.+)$/, async (ctx) => {
+    await handleInteractionResponse(ctx, "chat_me");
+  });
+
+  bot.callbackQuery(/^response_interact_spill_me_(.+)$/, async (ctx) => {
+    await handleInteractionResponse(ctx, "spill_me");
   });
 }

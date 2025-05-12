@@ -26,6 +26,7 @@ export interface SessionData {
   lastSendFeedback: Date | null;
   lastPostMenfess: Date | null;
   lastUserUpdatedDataWithDb: Date | null;
+  lastSentInteract: Date | null;
 }
 
 export type BotContext = Context & SessionFlavor<SessionData>;

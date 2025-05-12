@@ -89,7 +89,7 @@ export function initPostHandlers(bot: Bot<BotContext>): void {
           );
         await ctx.reply(
           `🎊 Yeay! @${ctx.from?.username} Menfess kamu berhasil dikirim! 🎉\n\n` +
-            `✨ *Menfess kamu:* ✨\n\n"${messageText}"\n\n` +
+            `✨ *Menfess kamu:* ✨\n\n❝${messageText}❞\n\n` +
             `📅 Pada tanggal ${getFormattedDate()} 📅\n\n` +
             "🔗 Kamu bisa melihat menfess kamu di link dibawah ini ⬇️\n\n" +
             `📢 Channel Base: @${botConfig.channelId.replace("@", "")}\n` +
@@ -137,7 +137,7 @@ export function initPostHandlers(bot: Bot<BotContext>): void {
 
     const menfessText =
       ctx.update?.callback_query?.message?.text?.match(
-        /✨\n\n"(.+?)"\n\n/
+        /✨\n\n❝(.+?)❞\n\n/
       )?.[1];
 
     const sentDateStringFormatted =
@@ -203,7 +203,7 @@ export function initPostHandlers(bot: Bot<BotContext>): void {
 
       await db.collection("menfess").doc(menfessId).delete();
       await ctx.editMessageText(
-        `✅ Sukses menghapus menfess: "${menfessText || menfessId}"`,
+        `✅ Sukses menghapus menfess:\n\n ❝${menfessText || menfessId}❞`,
         { parse_mode: "HTML" }
       );
     } catch (error) {
