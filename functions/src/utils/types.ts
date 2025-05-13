@@ -56,6 +56,7 @@ export interface BotConfig {
   telegramAdminId: number;
   adminBaseUserName: string;
   moderatorBaseUserName: string;
+  botChatIdNumber: number;
 }
 
 export interface UserDbData {

@@ -73,7 +73,7 @@ export async function sendStartPostMenu(ctx: BotContext) {
   const keyboard = new InlineKeyboard();
   keyboard
     .text("Menfess 🔮", "post_menfess")
-    .text("Anon Message 📝", "send_anon_message")
+    .text("Anon Message ✉️", "send_anon_message")
     .row()
     .text("« BACK", "back_to_main_menu");
 
@@ -94,4 +94,17 @@ export async function sendReportFeedbackMenu(ctx: BotContext) {
   await ctx.editMessageText("Apa hal yang ingin kamu sampaikan?", {
     reply_markup: keyboard,
   });
+}
+
+export async function sendSendAnonMessageMenu(ctx: BotContext) {
+  const keyboard = new InlineKeyboard();
+  keyboard.text("« BACK", "back_to_main_menu");
+
+  await ctx.editMessageText(
+    "✉️ Silahkan masukkan username dari user yang ingin kamu kirimkan pesan anonim!\n\n" +
+      "Contoh: @username",
+    {
+      reply_markup: keyboard,
+    }
+  );
 }

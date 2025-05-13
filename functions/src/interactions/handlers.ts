@@ -62,6 +62,18 @@ export function isForwardedMenfessFromChannelToGroup(ctx: BotContext): boolean {
 }
 
 /**
+ * Check if the message is forwarded from the user to the group
+ * @param ctx The context object
+ * @returns True if the message is forwarded from the user to the group, false otherwise
+ */
+export function isChatFromUserToGroup(ctx: BotContext): boolean {
+  return Boolean(
+    ctx.update?.message?.chat?.id &&
+      ctx.update?.message?.chat?.id === Number(botConfig.groupChatIdNumber)
+  );
+}
+
+/**
  * Initialize interaction handlers
  * @param bot The Telegram bot instance
  */

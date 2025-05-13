@@ -6,6 +6,9 @@ export const botConfig: BotConfig = {
   channelId: process.env.CHANNEL_ID || "",
   groupChatId: process.env.GROUP_CHAT_ID || "",
   postTrigger: process.env.POST_TRIGGER || "menfess",
+  botChatIdNumber: process.env.BOT_CHAT_ID_NUMBER
+    ? Number(process.env.BOT_CHAT_ID_NUMBER)
+    : 0,
   channelGroupChatIdNumber: process.env.CHANNEL_GROUP_CHAT_ID_NUMBER
     ? Number(process.env.CHANNEL_GROUP_CHAT_ID_NUMBER)
     : 0,

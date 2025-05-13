@@ -1,4 +1,8 @@
 import { Bot, InlineKeyboard } from "grammy";
+import {
+  isChatFromUserToGroup,
+  isForwardedMenfessFromChannelToGroup,
+} from "../interactions/handlers";
 import { botConfig } from "../utils/config";
 import { MONTH_NAMES } from "../utils/constants";
 import { db } from "../utils/firebase";
@@ -14,6 +18,14 @@ const lastBotMessages = new Map<number, number>();
  */
 export function initSessionModule(bot: Bot<BotContext>): void {
   bot.on("message", async (ctx, next) => {
+    if (isChatFromUserToGroup(ctx)) {
+      if (isForwardedMenfessFromChannelToGroup(ctx)) {
+        await next();
+        return;
+      } else {
+        return;
+      }
+    }
     const userId = ctx.from?.id;
     if (!userId) return;
 
