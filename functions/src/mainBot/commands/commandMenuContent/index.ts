@@ -139,12 +139,17 @@ export async function sendViewProfileMenu(ctx: BotContext) {
   } as UserDbData;
 
   const profileKeyboard = new InlineKeyboard()
+    // .row()
+    // .text("🚫 Block", `user_${userId}_block_${userDbData.userId}_${userDbData.username}`)
+    .text(
+      "⚠️ Report",
+      `user_${userId}_report_${userDbData.userId}_${userDbData.username}`
+    )
     .row()
-    .text("🚫 Block", `user_${userId}_block_${userDbData.userId}`)
-    .text("⚠️ Report", `user_${userId}_report_${userDbData.userId}`)
-    .row()
-    .text("📩 Anon Message", `user_${userId}_send_anon_to_${userDbData.userId}`)
-    .row()
+    .text(
+      "📩 Anon Message",
+      `user_${userId}_send_anon_to_${userDbData.userId}_${userDbData.username}`
+    )
     .url("👤 PROFILE", `https://t.me/${userDbData.username}`);
 
   // Format profile display text with dividers for better readability

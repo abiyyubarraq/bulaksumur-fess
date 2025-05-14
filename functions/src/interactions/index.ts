@@ -173,16 +173,18 @@ export function initInteractionHandlers(bot: Bot<BotContext>): void {
       );
       await ctx.answerCallbackQuery("❤️ Your request sent to user");
     } else if (action === "report") {
-      await db.collection("menfessReports").add({
+      await db.collection(`user/${userId}/reports`).add({
         reporterId: userId,
         reporterUsername: userName,
         menfessUID: mmenfessUID,
         menfessText: menfessOnGroupText,
-        menfessSenderId: menfessDbData.senderId,
-        menfessSenderUsername: menfessDbData.senderUserName,
+        userId: menfessDbData.senderId,
+        userName: menfessDbData.senderUserName,
         menfessChannelChatId: menfessDbData.channelChatId,
         menfessGroupChatId: menfessDbData.groupChatId,
         createdAt: new Date(),
+        isFromMenfess: true,
+        isRead: false,
       });
       await ctx.answerCallbackQuery(
         "Your report has been sent to the admin 🫡"

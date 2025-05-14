@@ -6,6 +6,7 @@ import { initSessionModule } from "../registerSessions";
 import { initSendFeedbackHandlers } from "../sendFeedback";
 import { botConfig } from "../utils/config";
 import type { BotContext, SessionData } from "../utils/types";
+import { initViewUserProfile } from "../view-user-profile";
 import { initCommands } from "./commands/index";
 
 export function startBot(bot: Bot<BotContext>): void {
@@ -59,6 +60,7 @@ export function createBot(): Bot<BotContext> {
   initPostHandlers(bot);
   initInteractionHandlers(bot);
   initSendFeedbackHandlers(bot);
+  initViewUserProfile(bot);
 
   bot.catch((err) => {
     console.error("Bot error occurred:", err);
