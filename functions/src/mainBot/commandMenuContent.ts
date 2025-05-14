@@ -2,8 +2,9 @@ import { InlineKeyboard } from "grammy";
 import moment from "moment";
 import { botConfig } from "../utils/config";
 import { MONTH_NAMES } from "../utils/constants";
+import { db } from "../utils/firebase";
 import { getPremiumBadge } from "../utils/helpers";
-import type { BotContext } from "../utils/types";
+import type { BotContext, UserDbData } from "../utils/types";
 
 export async function sendMainMenu(ctx: BotContext) {
   const userId = ctx.from?.id;
@@ -107,4 +108,75 @@ export async function sendSendAnonMessageMenu(ctx: BotContext) {
       reply_markup: keyboard,
     }
   );
+}
+
+export async function sendViewProfileMenu(ctx: BotContext) {
+  const userId = ctx.from?.id;
+  if (!userId) {
+    await ctx.reply("User tidak ditemukan.");
+    return;
+  }
+  const userNameText = ctx.message?.text?.split("@")[1];
+  if (!userNameText) {
+    await ctx.reply(
+      "Format username yang kamu masukkan tidak valid. Silahkan cek kembali username yang kamu masukkan."
+    );
+    return;
+  }
+  const userDb = await db
+    .collection("users")
+    .where("username", "==", userNameText?.toLowerCase())
+    .limit(1)
+    .get();
+  if (userDb.empty || !userDb.docs[0]) {
+    await ctx.reply("User tidak ditemukan.");
+    return;
+  }
+  const userDoc = userDb.docs[0];
+  const userDbData = {
+    ...userDoc.data(),
+    userId: Number(userDoc.id),
+  } as UserDbData;
+
+  const profileKeyboard = new InlineKeyboard()
+    .row()
+    .text("🚫 Block", `user_${userId}_block_${userDbData.userId}`)
+    .text("⚠️ Report", `user_${userId}_report_${userDbData.userId}`)
+    .row()
+    .text("📩 Anon Message", `user_${userId}_send_anon_to_${userDbData.userId}`)
+    .row()
+    .url("👤 PROFILE", `https://t.me/${userDbData.username}`);
+
+  // Format profile display text with dividers for better readability
+  let profileText = `🔹 Profile\n@${userDbData.username}\n💬 --Placeholder for bio-- 💬\n\n`;
+  profileText += `👤 Name : ${userDbData.anonName}\n`;
+  profileText += `🧬 Sex : ${userDbData.gender === "M" ? "#M♂" : "#F♀"}\n`;
+  // profileText += `📍 Location : -\n`;
+  // profileText += `👀 Interest in : #DATING\n\n`;
+  // profileText += `⭐ Popularities : ${userDbData.menfessCount || 0}\n`;
+  // profileText += `🔍 Activities : ${userDbData.menfessCount > 0 ? Math.min(userDbData.menfessCount, 99) : 0}\n\n`;
+  // profileText += `⚡ Score : ${(userDbData.menfessCount || 0) * 100}\n`;
+
+  // Add warning/deleted info if available (placeholder for now)
+  // profileText += `❌ Deleted : 0x\n`;
+  // profileText += `⚠️ Warned : 0x\n\n`;
+
+  // Add user ID and join information
+  profileText += `🆔 ID : ${userDbData.userId}\n`;
+  profileText += `@ Username : @${userDbData.username}\n`;
+
+  // Format registration date
+  const registeredDate = moment(userDbData.registeredAt.toDate());
+  const formattedJoinDate = registeredDate.format("DD-MM-YYYY HH:mm");
+  profileText += `🕒 Join time : ${formattedJoinDate}\n`;
+
+  // Add a placeholder for last seen (can be updated with actual data later)
+  // const lastSeen = moment().add(1, "year");
+  // const formattedLastSeen = lastSeen.format("DD-MM-YYYY HH:mm");
+  // profileText += `👁 Last Seen : ${formattedLastSeen}`;
+
+  // Send the profile display
+  await ctx.reply(profileText, {
+    reply_markup: profileKeyboard,
+  });
 }

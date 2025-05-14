@@ -1,8 +1,9 @@
 import { Bot, InlineKeyboard } from "grammy";
+
 import {
   isChatFromUserToGroup,
   isForwardedMenfessFromChannelToGroup,
-} from "../interactions/handlers";
+} from "../interactions";
 import { botConfig } from "../utils/config";
 import { MONTH_NAMES } from "../utils/constants";
 import { db } from "../utils/firebase";
@@ -43,6 +44,17 @@ export function initSessionModule(bot: Bot<BotContext>): void {
 
     if (ctx.session.isBanned) {
       await ctx.reply("Maaf, kamu tidak diizinkan mengirim menfess.");
+      return;
+    }
+
+    const memberStatus = await ctx.api.getChatMember(
+      botConfig.channelId,
+      userId
+    );
+    if (memberStatus.status !== "member") {
+      await ctx.reply(
+        `Maaf, belum join ke channel, silahkan join ke channel ${botConfig.channelId} terlebih dahulu.`
+      );
       return;
     }
 

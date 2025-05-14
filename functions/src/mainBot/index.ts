@@ -1,6 +1,7 @@
 import { Bot, session } from "grammy";
 import { initInteractionHandlers } from "../interactions";
 import { initPostHandlers } from "../postMenfess";
+
 import { initSessionModule } from "../registerSessions";
 import { initSendFeedbackHandlers } from "../sendFeedback";
 import { botConfig } from "../utils/config";
@@ -29,6 +30,8 @@ export function createBot(): Bot<BotContext> {
       premiumUntil: null,
       lastSendFeedback: null,
       lastPostMenfess: null,
+      lastUserUpdatedDataWithDb: null,
+      lastSentInteract: null,
     };
   }
   bot.use(session({ initial }));
