@@ -1,10 +1,10 @@
 import { InlineKeyboard } from "grammy";
 import moment from "moment";
-import { botConfig } from "../utils/config";
-import { MONTH_NAMES } from "../utils/constants";
-import { db } from "../utils/firebase";
-import { getPremiumBadge } from "../utils/helpers";
-import type { BotContext, UserDbData } from "../utils/types";
+import { botConfig } from "../../../utils/config";
+import { MONTH_NAMES } from "../../../utils/constants";
+import { db } from "../../../utils/firebase";
+import { getPremiumBadge } from "../../../utils/helpers";
+import type { BotContext, UserDbData } from "../../../utils/types";
 
 export async function sendMainMenu(ctx: BotContext) {
   const userId = ctx.from?.id;

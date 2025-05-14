@@ -6,12 +6,15 @@ import { initSessionModule } from "../registerSessions";
 import { initSendFeedbackHandlers } from "../sendFeedback";
 import { botConfig } from "../utils/config";
 import type { BotContext, SessionData } from "../utils/types";
-import { initCommands } from "./commands";
+import { initCommands } from "./commands/index";
 
-/**
- * Create a new bot instance with all handlers
- * @returns The created bot instance
- */
+export function startBot(bot: Bot<BotContext>): void {
+  bot.start({
+    drop_pending_updates: true,
+    allowed_updates: ["message", "callback_query"],
+  });
+}
+
 export function createBot(): Bot<BotContext> {
   const bot = new Bot<BotContext>(botConfig.botToken);
   function initial(): SessionData {
@@ -62,15 +65,4 @@ export function createBot(): Bot<BotContext> {
   });
 
   return bot;
-}
-
-/**
- * Start the bot
- * @param bot The bot instance to start
- */
-export function startBot(bot: Bot): void {
-  bot.start({
-    drop_pending_updates: true,
-    allowed_updates: ["message", "callback_query"],
-  });
 }

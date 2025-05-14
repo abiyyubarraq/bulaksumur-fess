@@ -1,8 +1,8 @@
 import { Bot, InlineKeyboard } from "grammy";
-import { startPostMenfessListener } from "../postMenfess";
-import { startSendFeedBackListener } from "../sendFeedback";
-import { botConfig } from "../utils/config";
-import type { BotContext } from "../utils/types";
+import { startPostMenfessListener } from "../../postMenfess";
+import { startSendFeedBackListener } from "../../sendFeedback";
+import { botConfig } from "../../utils/config";
+import type { BotContext } from "../../utils/types";
 import {
   sendHelpMenu,
   sendMainMenu,
@@ -13,10 +13,6 @@ import {
   sendViewProfileMenu,
 } from "./commandMenuContent";
 
-/**
- * Initialize basic bot commands
- * @param bot The Telegram bot instance
- */
 export function initCommands(bot: Bot<BotContext>): void {
   bot.on("message:entities:bot_command", async (ctx, next) => {
     const receivedCmd = ctx.message.text?.split(" ")[0];
