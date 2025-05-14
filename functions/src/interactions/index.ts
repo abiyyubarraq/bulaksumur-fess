@@ -173,7 +173,7 @@ export function initInteractionHandlers(bot: Bot<BotContext>): void {
       );
       await ctx.answerCallbackQuery("❤️ Your request sent to user");
     } else if (action === "report") {
-      await db.collection(`user/${userId}/reports`).add({
+      await db.collection(`users/${userId}/reports`).add({
         reporterId: userId,
         reporterUsername: userName,
         menfessUID: mmenfessUID,
