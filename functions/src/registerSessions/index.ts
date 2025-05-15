@@ -15,11 +15,32 @@ const lastBotMessages = new Map<number, number>();
 
 export function initSessionModule(bot: Bot<ParseModeFlavor<BotContext>>): void {
   bot.on("callback_query:data", async (ctx, next) => {
+    const userId = ctx.from?.id;
+    if (!userId) return;
     const username = ctx.from?.username;
 
     if (!username) {
       await ctx.answerCallbackQuery(
         "⚠️ Username tidak ditemukan! 🔔 Silahkan buat username Telegram terlebih dahulu untuk menggunakan bot ini."
+      );
+      return;
+    } else if (ctx.session.isBanned) {
+      await ctx.reply("❌ Maaf, kamu tidak diizinkan mengirim menfess. 🚫");
+      return;
+    }
+
+    const memberStatus = await ctx.api.getChatMember(
+      botConfig.channelId,
+      userId
+    );
+
+    if (
+      memberStatus.status === "left" ||
+      memberStatus.status === "kicked" ||
+      memberStatus.status === "restricted"
+    ) {
+      await ctx.reply(
+        `⚠️ Maaf, kamu belum join ke channel\n\n🔔 Silahkan join ke channel ${botConfig.channelId} terlebih dahulu.`
       );
       return;
     } else {
@@ -73,7 +94,7 @@ export function initSessionModule(bot: Bot<ParseModeFlavor<BotContext>>): void {
       memberStatus.status === "restricted"
     ) {
       await ctx.reply(
-        `⚠️ Maaf, belum join ke channel\n\n🔔 Silahkan join ke channel ${botConfig.channelId} terlebih dahulu.`
+        `⚠️ Maaf, kamu belum join ke channel\n\n🔔 Silahkan join ke channel ${botConfig.channelId} terlebih dahulu.`
       );
       return;
     }
