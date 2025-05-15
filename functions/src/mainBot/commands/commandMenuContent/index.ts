@@ -45,7 +45,9 @@ export async function sendMainMenu(ctx: BotContext) {
     `🆔 ID : ${userId}\n` +
     `⏱️ Join time : ${ctx.session.registeredAt ? moment(ctx.session.registeredAt).format("DD/MM/YYYY HH:mm") : "-"}\n\n` +
     `📅 Premium until : ${ctx.session.premiumUntil ? moment(ctx.session.premiumUntil).format("DD/MM/YYYY HH:mm") : "-"}\n\n` +
-    `👪 Channel Base: @${botConfig.channelId.replace("@", "")}`;
+    `👪 Channel Base: @${botConfig.channelId.replace("@", "")}\n` +
+    `👨‍💼 Admin Base: @${botConfig.adminBaseUserName}\n` +
+    `👮‍♂️ Moderator Base: @${botConfig.moderatorBaseUserName}\n`;
 
   if (ctx.callbackQuery) {
     await ctx.editMessageText(messageText, {
@@ -178,6 +180,10 @@ export async function sendViewProfileMenu(ctx: BotContext) {
   // const lastSeen = moment().add(1, "year");
   // const formattedLastSeen = lastSeen.format("DD-MM-YYYY HH:mm");
   // profileText += `👁 Last Seen : ${formattedLastSeen}`;
+
+  profileText += `\n📢 Channel Base: @${botConfig.channelId.replace("@", "")}\n`;
+  profileText += `👨‍💼 Admin Base: @${botConfig.adminBaseUserName}\n`;
+  profileText += `👮‍♂️ Moderator Base: @${botConfig.moderatorBaseUserName}\n`;
 
   // Send the profile display
   await ctx.reply(profileText, {
