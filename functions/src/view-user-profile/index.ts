@@ -125,7 +125,7 @@ export function initViewUserProfile(bot: Bot<BotContext>): void {
       const messageText = ctx.message.text;
 
       if (!targetUserId || !targetUsername) {
-        await ctx.reply("🚫 User tidak ditemukan.");
+        await ctx.reply("😔 User tidak ditemukan.");
         return;
       }
 
@@ -163,7 +163,7 @@ export function initViewUserProfile(bot: Bot<BotContext>): void {
       };
       const messageText = ctx.message.text;
       if (!targetUserId || !targetUsername) {
-        await ctx.reply("🚫 User tidak ditemukan.");
+        await ctx.reply("😔 User tidak ditemukan.");
         return;
       }
 

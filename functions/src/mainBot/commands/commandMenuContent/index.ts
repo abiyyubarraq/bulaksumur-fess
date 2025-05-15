@@ -114,9 +114,10 @@ export async function sendSendAnonMessageMenu(ctx: BotContext) {
 export async function sendViewProfileMenu(ctx: BotContext) {
   const userId = ctx.from?.id;
   if (!userId) {
-    await ctx.reply("User tidak ditemukan.");
+    await ctx.reply("😔 User tidak ditemukan.");
     return;
   }
+  const messageId = ctx.message?.message_id;
   const userNameText = ctx.message?.text?.split("@")[1];
   if (!userNameText) {
     await ctx.reply(
@@ -130,7 +131,9 @@ export async function sendViewProfileMenu(ctx: BotContext) {
     .limit(1)
     .get();
   if (userDb.empty || !userDb.docs[0]) {
-    await ctx.reply("User tidak ditemukan.");
+    await ctx.reply("😔 User tidak ditemukan.", {
+      reply_to_message_id: messageId,
+    });
     return;
   }
   const userDoc = userDb.docs[0];
@@ -188,5 +191,6 @@ export async function sendViewProfileMenu(ctx: BotContext) {
   // Send the profile display
   await ctx.reply(profileText, {
     reply_markup: profileKeyboard,
+    reply_to_message_id: messageId,
   });
 }
