@@ -96,6 +96,21 @@ export function initViewUserProfile(bot: Bot<BotContext>): void {
     await ctx.editMessageText("Kamu membatalkan mengirim laporan.");
   });
 
+  bot.callbackQuery(
+    /^unsend_anon_message_to_(\d+)_(\d+)_(\d+)$/,
+    async (ctx) => {
+      const targetUsername = ctx.match[1];
+      const targetUserId = Number(ctx.match[2]);
+      const messageId = Number(ctx.match[3]);
+
+      await ctx.api.deleteMessage(targetUserId, messageId);
+
+      await ctx.editMessageText(
+        `😶 Kamu berhasil menghapus pesan anonim ke @${targetUsername}.`
+      );
+    }
+  );
+
   bot.on("message:text", async (ctx, next) => {
     if (ctx.from && usersInAnonMessageMode.has(ctx.from.id)) {
       if (lastBotMessageId) {
@@ -114,17 +129,25 @@ export function initViewUserProfile(bot: Bot<BotContext>): void {
         return;
       }
 
-      const formattedMessage = `🔹 Hello @${targetUsername} 👋\n\n📨 Kamu mendapat kiriman pesan anonim ✨\n\n💌 Pesan:\n\n❝${messageText}❞`;
+      const formattedMessage = `🔹 Hello @${targetUsername} 👋\n\n📨 Kamu mendapat kiriman pesan anonim ✨\n\n💌 Pesan:\n\n❝${messageText}❞\n\n${ctx.session.gender === "M" ? "🕺 #M*" : "💃 #F*"}`;
 
-      await ctx.api.sendMessage(targetUserId, formattedMessage);
-
-      await ctx.reply(
-        `✅ Pesan anonim kamu telah berhasil dikirim ke @${targetUsername}!`
+      const sentMessage = await ctx.api.sendMessage(
+        targetUserId,
+        formattedMessage
       );
 
-      if (ctx.from) {
-        usersInAnonMessageMode.delete(ctx.from.id);
-      }
+      const keyboard = new InlineKeyboard().text(
+        "✖️ Unsend",
+        `unsend_anon_message_to_${targetUsername}_${targetUserId}_${(sentMessage as { message_id: number }).message_id}`
+      );
+      await ctx.reply(
+        `📤 Pesan anonim kamu telah berhasil dikirim ke @${targetUsername}!`,
+        {
+          reply_markup: keyboard,
+        }
+      );
+
+      usersInAnonMessageMode.delete(ctx.from.id);
 
       return;
     }
@@ -159,9 +182,7 @@ export function initViewUserProfile(bot: Bot<BotContext>): void {
         `🚨 Laporan terkait pengguna @${targetUsername} telah berhasil dikirim ke admin.`
       );
 
-      if (ctx.from) {
-        userInReportingUserMode.delete(ctx.from.id);
-      }
+      userInReportingUserMode.delete(ctx.from.id);
 
       return;
     }

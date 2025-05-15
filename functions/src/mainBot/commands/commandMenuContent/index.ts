@@ -27,7 +27,6 @@ export async function sendMainMenu(ctx: BotContext) {
     .text("Kirim ▶️", "start_post");
 
   const username = ctx.from?.username || "-";
-  const gender = ctx.session.gender === "M" ? "M" : "F";
   const birthMonth =
     ctx.session.birthMonth && MONTH_NAMES[ctx.session.birthMonth - 1]
       ? MONTH_NAMES[ctx.session.birthMonth - 1]
@@ -39,7 +38,7 @@ export async function sendMainMenu(ctx: BotContext) {
   const messageText =
     `👽 Name : @${username}${getPremiumBadge(premiumStatus)}\n` +
     `👤 AnonName : ${ctx.session.anonName}\n` +
-    `🚹 Sex : ${gender}\n` +
+    `🚹 Sex : ${ctx.session.gender === "M" ? "#M♂" : "#F♀"}\n` +
     `👶 Birth : ${birthMonth} ${birthYear}\n` +
     // `⚡ Score : ${1000}\n` +
     // `💰 Gold : ${2000}\n\n` +
@@ -155,7 +154,7 @@ export async function sendViewProfileMenu(ctx: BotContext) {
   // Format profile display text with dividers for better readability
   let profileText = `🔹 Profile\n@${userDbData.username}\n💬 --Placeholder for bio-- 💬\n\n`;
   profileText += `👤 Name : ${userDbData.anonName}\n`;
-  profileText += `🧬 Sex : ${userDbData.gender === "M" ? "#M♂" : "#F♀"}\n`;
+  profileText += `🧬 Sex : ${userDbData.gender === "M" ? "🕺 #M♂" : "💃 #F♀"}\n`;
   // profileText += `📍 Location : -\n`;
   // profileText += `👀 Interest in : #DATING\n\n`;
   // profileText += `⭐ Popularities : ${userDbData.menfessCount || 0}\n`;
