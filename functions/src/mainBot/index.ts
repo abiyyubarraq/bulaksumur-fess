@@ -2,6 +2,7 @@ import { Bot, session } from "grammy";
 import { initInteractionHandlers } from "../interactions";
 import { initPostHandlers } from "../postMenfess";
 
+import { initPasteLinkHandler } from "../pasteLinkHandler";
 import { initSessionModule } from "../registerSessions";
 import { initSendFeedbackHandlers } from "../sendFeedback";
 import { botConfig } from "../utils/config";
@@ -58,6 +59,7 @@ export function createBot(): Bot<BotContext> {
   initSessionModule(bot);
   initCommands(bot);
   initPostHandlers(bot);
+  initPasteLinkHandler(bot);
   initInteractionHandlers(bot);
   initSendFeedbackHandlers(bot);
   initViewUserProfile(bot);

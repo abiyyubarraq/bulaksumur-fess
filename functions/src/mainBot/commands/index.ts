@@ -1,4 +1,8 @@
-import { Bot, InlineKeyboard } from "grammy";
+import { Bot } from "grammy";
+import {
+  sendPasteChannelLinkMenu,
+  sendPasteGroupLinkMenu,
+} from "../../pasteLinkHandler";
 import { startPostMenfessListener } from "../../postMenfess";
 import { startSendFeedBackListener } from "../../sendFeedback";
 import { botConfig } from "../../utils/config";
@@ -37,103 +41,16 @@ export function initCommands(bot: Bot<BotContext>): void {
   bot.hears(
     new RegExp(`https://t\\.me/${botConfig.channelId.replace("@", "")}/`),
     async (ctx) => {
-      const channelChatId = ctx.update.message?.text?.split("/")[4];
-      const userId = ctx.from?.id;
-      if (!channelChatId || isNaN(Number(channelChatId))) {
-        ctx.reply(
-          "❌ Channel chat tidak ditemukan, silahkan cek kembali link channel yang kamu masukkan\n\n" +
-            "🔗 Contoh link channel yang benar: https://t.me/usernameChannel/111"
-        );
-        return;
-      }
-      if (!userId) {
-        return;
-      }
-
-      const keyboard = new InlineKeyboard();
-      keyboard.text("« BACK", "back_to_main_menu");
-
-      try {
-        const data = await fetch(ctx.update.message?.text ?? "", {
-          method: "GET",
-        });
-        const jsonData = await data.text();
-        console.log(jsonData);
-        // await ctx.api.copyMessage(
-        //   userId,
-        //   botConfig.channelId,
-        //   Number(channelChatId),
-        //   {
-        //     reply_markup: keyboard,
-        //   }
-        // );
-        ctx.reply("✅ Pesan dari channel berhasil disalin");
-      } catch (error) {
-        console.error("Error fetching/copying message:", error);
-        ctx.reply("❌ Gagal mengambil pesan dari channel");
-      }
+      await sendPasteChannelLinkMenu(ctx);
     }
   );
 
-  // bot.hears(
-  //   new RegExp(`https://t\\.me/${botConfig.groupChatId.replace("@", "")}/`),
-  //   async (ctx) => {
-  //     const groupChatId = ctx.update.message?.text?.split("/")[4];
-  //     if (!groupChatId || isNaN(Number(groupChatId))) {
-  //       ctx.reply(
-  //         "❌ Group chat tidak ditemukan, silahkan cek kembali link grup yang kamu masukkan\n\n" +
-  //           "🔗 Contoh link grup yang benar: https://t.me/usernameGroup/111"
-  //       );
-  //       return;
-  //     }
-
-  //     const keyboard = new InlineKeyboard();
-  //     keyboard.text("« BACK", "back_to_main_menu");
-
-  //     try {
-  //       // Direct fetch to Telegram API
-  //       const token = botConfig.botToken;
-  //       const url = `https://api.telegram.org/bot${token}/channels.getMessages`;
-
-  //       const response = await fetch(url, {
-  //         method: "POST",
-  //         headers: {
-  //           "Content-Type": "application/json",
-  //         },
-  //         body: JSON.stringify({
-  //           channel: {
-  //             _: "inputChannel",
-  //             channel_id: botConfig.groupChatId.replace("@", ""),
-  //             access_hash: 0,
-  //           },
-  //           id: [
-  //             {
-  //               _: "inputMessageID",
-  //               id: Number(groupChatId),
-  //             },
-  //           ],
-  //         }),
-  //       });
-
-  //       const data = await response.json();
-  //       console.log(data);
-
-  //       // Fallback to copyMessage if needed
-  //       const copiedMessage = await ctx.api.copyMessage(
-  //         ctx.from?.id || 0,
-  //         botConfig.groupChatId,
-  //         Number(groupChatId),
-  //         {
-  //           reply_markup: keyboard,
-  //         }
-  //       );
-  //       ctx.reply("✅ Pesan dari grup berhasil disalin");
-  //     } catch (error) {
-  //       console.error("Error fetching/copying message:", error);
-  //       ctx.reply("❌ Gagal mengambil pesan dari grup");
-  //     }
-  //   }
-  // );
+  bot.hears(
+    new RegExp(`https://t\\.me/${botConfig.groupChatId.replace("@", "")}/`),
+    async (ctx) => {
+      await sendPasteGroupLinkMenu(ctx);
+    }
+  );
 
   // Init Command
   bot.command("help", async (ctx) => {

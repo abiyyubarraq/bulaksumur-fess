@@ -129,7 +129,7 @@ export function initViewUserProfile(bot: Bot<BotContext>): void {
         return;
       }
 
-      const formattedMessage = `🔹 Hello @${targetUsername} 👋\n\n📨 Kamu mendapat kiriman pesan anonim ✨\n\n💌 Pesan:\n\n❝${messageText}❞\n\n${ctx.session.gender === "M" ? "🕺 #M*" : "💃 #F*"}`;
+      const formattedMessage = `🔹 Hello @${targetUsername} 👋\n\n📨 Kamu mendapat kiriman pesan anonim ✨\n\n💌 Pesan:\n\n❝${messageText}❞\n\n${ctx.session.gender === "M" ? "🕺 #M✘✘" : "💃 #F✘✘"}`;
 
       const sentMessage = await ctx.api.sendMessage(
         targetUserId,

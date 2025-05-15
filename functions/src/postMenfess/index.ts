@@ -262,9 +262,8 @@ export async function postToChannel(ctx: BotContext) {
   }
 
   const userName = ctx.from?.username;
-  const formattedDate = getFormattedDate();
   const menfessUID = generateUID(20);
-  const footer = `\n\n⏰ ${formattedDate} \n\n!$${menfessUID}`;
+  const footer = `\n\n${ctx.session.gender === "M" ? "🕺 #M✘✘" : "💃 #F✘✘"} \n\n!$${menfessUID}`;
 
   try {
     let sentMessage;
