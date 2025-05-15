@@ -1,3 +1,4 @@
+import type { ParseModeFlavor } from "@grammyjs/parse-mode";
 import { Bot, InlineKeyboard } from "grammy";
 import moment from "moment";
 import { db } from "../utils/firebase";
@@ -7,13 +8,15 @@ import type { BotContext, ListenFeedbackState } from "../utils/types";
 const userStates = new Map<number, ListenFeedbackState>();
 
 const waitingForFeedbackMessage = (feedBackType: string) =>
-  `Silahkan balas ke pesan ini dengan ${feedBackType} kamu!` +
+  `Silahkan balas dengan ${feedBackType} yang ingin kamu sampaikan!` +
   `\n\n` +
   `*Note: Minimal 32 karakter dan hanya boleh mengandungi huruf, angka, spasi, dan tanda baca*` +
   `\n\n` +
   `Gunakan bahasa yang sopan ky kmu ngchat admin fakultas y`;
 
-export function initSendFeedbackHandlers(bot: Bot<BotContext>): void {
+export function initSendFeedbackHandlers(
+  bot: Bot<ParseModeFlavor<BotContext>>
+): void {
   bot.on("message:text", async (ctx, next) => {
     const userId = ctx.from?.id;
     if (!userId) return;
@@ -81,7 +84,7 @@ export function initSendFeedbackHandlers(bot: Bot<BotContext>): void {
 }
 
 export async function startSendFeedBackListener(
-  ctx: BotContext,
+  ctx: ParseModeFlavor<BotContext>,
   feedBackType: ListenFeedbackState["feedBackType"]
 ) {
   if (

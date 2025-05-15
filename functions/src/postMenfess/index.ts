@@ -1,3 +1,4 @@
+import type { ParseModeFlavor } from "@grammyjs/parse-mode";
 import { FieldValue } from "firebase-admin/firestore";
 import { Bot, InlineKeyboard } from "grammy";
 import moment from "moment";
@@ -25,7 +26,7 @@ const waitingForMenfessMessage =
   `❕Menfess berupa text panjang minimal 32 karakter dan maksimal 888 karakter. Untuk Menfess dengan media panjang maksimal adalah 260 karakter.\n\n` +
   `❕Hanya boleh karakter ASCII dengan maksimal 2 baris baru, diperbolehkan memakai format text telegram.`;
 
-export function initPostHandlers(bot: Bot<BotContext>): void {
+export function initPostHandlers(bot: Bot<ParseModeFlavor<BotContext>>): void {
   bot.on(["message:text", "message:photo"], async (ctx, next) => {
     const userId = ctx.from?.id;
     if (!userId) return;
@@ -215,7 +216,9 @@ export function initPostHandlers(bot: Bot<BotContext>): void {
  * Handle post command
  * @param ctx Bot context
  */
-export async function startPostMenfessListener(ctx: BotContext): Promise<void> {
+export async function startPostMenfessListener(
+  ctx: ParseModeFlavor<BotContext>
+): Promise<void> {
   if (
     ctx.session.lastPostMenfess &&
     moment(ctx.session.lastPostMenfess).isAfter(moment().subtract(5, "minutes"))
@@ -250,7 +253,7 @@ export async function startPostMenfessListener(ctx: BotContext): Promise<void> {
  * @param ctx Bot context
  * @returns The sent message object
  */
-export async function postToChannel(ctx: BotContext) {
+export async function postToChannel(ctx: ParseModeFlavor<BotContext>) {
   if (!ctx.message) {
     throw new Error("No message to post");
   }

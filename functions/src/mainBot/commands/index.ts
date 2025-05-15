@@ -1,3 +1,4 @@
+import type { ParseModeFlavor } from "@grammyjs/parse-mode";
 import { Bot } from "grammy";
 import {
   sendPasteChannelLinkMenu,
@@ -17,7 +18,7 @@ import {
   sendViewProfileMenu,
 } from "./commandMenuContent";
 
-export function initCommands(bot: Bot<BotContext>): void {
+export function initCommands(bot: Bot<ParseModeFlavor<BotContext>>): void {
   bot.on("message:entities:bot_command", async (ctx, next) => {
     const receivedCmd = ctx.message.text?.split(" ")[0];
     if (

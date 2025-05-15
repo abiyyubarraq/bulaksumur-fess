@@ -1,3 +1,4 @@
+import type { ParseModeFlavor } from "@grammyjs/parse-mode";
 import { FieldValue } from "firebase-admin/firestore";
 import { Bot, InlineKeyboard } from "grammy";
 import moment from "moment";
@@ -7,8 +8,8 @@ import { extractMenfessUID } from "../utils/helpers";
 import type { BotContext, MenfessDbData } from "../utils/types";
 
 export async function postMenfessInteraction(
-  ctx: BotContext,
-  bot: Bot<BotContext>
+  ctx: ParseModeFlavor<BotContext>,
+  bot: Bot<ParseModeFlavor<BotContext>>
 ) {
   const keyboard = new InlineKeyboard()
     .text("👊 Hit Me!", "hitme")
@@ -42,7 +43,9 @@ export async function postMenfessInteraction(
   }
 }
 
-export function isForwardedMenfessFromChannelToGroup(ctx: BotContext): boolean {
+export function isForwardedMenfessFromChannelToGroup(
+  ctx: ParseModeFlavor<BotContext>
+): boolean {
   return Boolean(
     ctx.senderChat?.id === botConfig.channelGroupChatIdNumber &&
       ctx.chat?.id === botConfig.groupChatIdNumber &&
@@ -51,14 +54,18 @@ export function isForwardedMenfessFromChannelToGroup(ctx: BotContext): boolean {
   );
 }
 
-export function isChatFromUserToGroup(ctx: BotContext): boolean {
+export function isChatFromUserToGroup(
+  ctx: ParseModeFlavor<BotContext>
+): boolean {
   return Boolean(
     ctx.update?.message?.chat?.id &&
       ctx.update?.message?.chat?.id === Number(botConfig.groupChatIdNumber)
   );
 }
 
-export function initInteractionHandlers(bot: Bot<BotContext>): void {
+export function initInteractionHandlers(
+  bot: Bot<ParseModeFlavor<BotContext>>
+): void {
   bot.callbackQuery(["hitme", "who", "talk", "report"], async (ctx) => {
     const action = ctx.callbackQuery.data;
     const userId = ctx.from?.id;
@@ -205,7 +212,10 @@ export function initInteractionHandlers(bot: Bot<BotContext>): void {
     ctx.session.lastSentInteract = new Date();
   });
 
-  const handleInteractionResponse = async (ctx: BotContext, type: string) => {
+  const handleInteractionResponse = async (
+    ctx: ParseModeFlavor<BotContext>,
+    type: string
+  ) => {
     const senderMenfessId = ctx.from?.id;
     const senderMenfessUsername = ctx.from?.username;
     const interactReqData = ctx.callbackQuery?.data?.match(

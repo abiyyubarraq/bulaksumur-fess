@@ -1,3 +1,4 @@
+import type { ParseModeFlavor } from "@grammyjs/parse-mode";
 import { type Bot, InlineKeyboard } from "grammy";
 import { db } from "../utils/firebase";
 import { sanitizeMessage } from "../utils/helpers";
@@ -13,7 +14,9 @@ const userInReportingUserMode = new Map<
 >();
 let lastBotMessageId: number | null = null;
 
-export function initViewUserProfile(bot: Bot<BotContext>): void {
+export function initViewUserProfile(
+  bot: Bot<ParseModeFlavor<BotContext>>
+): void {
   // bot.callbackQuery(/^user_(\d+)_block_(\d+)$/, async (ctx) => {
   //   const targetUserId = ctx.match[1];
   //   await ctx.answerCallbackQuery({
@@ -43,7 +46,7 @@ export function initViewUserProfile(bot: Bot<BotContext>): void {
     );
 
     const botMessage = await ctx.editMessageText(
-      `🚨 Silahkan balas pesan ini dengan laporan kamu terkait pengguna @${targetUsername}!\n\n`,
+      `🚨 Silahkan balas dengan laporan kamu terkait pengguna @${targetUsername}!\n\n`,
       {
         reply_markup: cancelKeyboard,
       }
@@ -72,7 +75,7 @@ export function initViewUserProfile(bot: Bot<BotContext>): void {
     );
 
     const botMessage = await ctx.editMessageText(
-      `✉️ Silahkan balas pesan ini dengan pesan anonim yang ingin kamu kirimkan ke @${targetUsername}!\n\n`,
+      `✉️ Silahkan balas dengan pesan anonim yang ingin kamu kirimkan ke @${targetUsername}!\n\n`,
       {
         reply_markup: cancelKeyboard,
       }

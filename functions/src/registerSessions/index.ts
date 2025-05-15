@@ -1,5 +1,6 @@
 import { Bot, InlineKeyboard } from "grammy";
 
+import type { ParseModeFlavor } from "@grammyjs/parse-mode";
 import {
   isChatFromUserToGroup,
   isForwardedMenfessFromChannelToGroup,
@@ -10,14 +11,9 @@ import { db } from "../utils/firebase";
 import { isValidEmail, isValidName, matchCallbackData } from "../utils/helpers";
 import type { BotContext, UserDbData } from "../utils/types";
 
-// In-memory map to store last bot message IDs for each user
 const lastBotMessages = new Map<number, number>();
 
-/**
- * Initialize session and registration commands
- * @param bot The Telegram bot instance
- */
-export function initSessionModule(bot: Bot<BotContext>): void {
+export function initSessionModule(bot: Bot<ParseModeFlavor<BotContext>>): void {
   bot.on("message", async (ctx, next) => {
     if (isChatFromUserToGroup(ctx)) {
       if (isForwardedMenfessFromChannelToGroup(ctx)) {
@@ -37,13 +33,18 @@ export function initSessionModule(bot: Bot<BotContext>): void {
     const username = ctx.from?.username;
     if (!username) {
       await ctx.reply(
-        "⚠️ Username tidak ditemukan!\n\nSilahkan buat username Telegram terlebih dahulu untuk menggunakan bot ini.\n\nCara membuat username:\n\n1. Buka pengaturan Telegram\n2. Pilih menu 'Username'\n3. Buat username baru"
+        "⚠️ Username tidak ditemukan! ❌\n\n" +
+          "🔔 Silahkan buat username Telegram terlebih dahulu untuk menggunakan bot ini.\n\n" +
+          "📝 Cara membuat username:\n\n" +
+          "1️⃣ Buka pengaturan Telegram ⚙️\n" +
+          "2️⃣ Pilih menu 'Username' 👤\n" +
+          "3️⃣ Buat username baru ✨"
       );
       return;
     }
 
     if (ctx.session.isBanned) {
-      await ctx.reply("Maaf, kamu tidak diizinkan mengirim menfess.");
+      await ctx.reply("❌ Maaf, kamu tidak diizinkan mengirim menfess. 🚫");
       return;
     }
 
@@ -51,9 +52,14 @@ export function initSessionModule(bot: Bot<BotContext>): void {
       botConfig.channelId,
       userId
     );
-    if (memberStatus.status !== "member") {
+
+    if (
+      memberStatus.status === "left" ||
+      memberStatus.status === "kicked" ||
+      memberStatus.status === "restricted"
+    ) {
       await ctx.reply(
-        `Maaf, belum join ke channel, silahkan join ke channel ${botConfig.channelId} terlebih dahulu.`
+        `⚠️ Maaf, belum join ke channel\n\n🔔 Silahkan join ke channel ${botConfig.channelId} terlebih dahulu.`
       );
       return;
     }
@@ -71,7 +77,7 @@ export function initSessionModule(bot: Bot<BotContext>): void {
         .get();
       if (bannedUserDoc.exists) {
         ctx.session.isBanned = true;
-        await ctx.reply("Maaf, kamu tidak diizinkan mengirim menfess.");
+        await ctx.reply("❌ Maaf, kamu tidak diizinkan mengirim menfess. 🚫");
         return;
       }
       // check db
@@ -318,14 +324,14 @@ export function initSessionModule(bot: Bot<BotContext>): void {
           menfessCount: 0,
         });
         await ctx.reply(
-          "🎉 Selamat! Pendaftaran kamu telah berhasil! 🎉\n\n" +
-            `Nama Anonym: ${ctx.session.anonName}\n` +
-            `Email: ${ctx.session.emailRegistered}\n` +
-            `Jenis Kelamin: ${ctx.session.gender === "M" ? "Laki-laki" : "Perempuan"}\n` +
-            `Bulan Lahir: ${ctx.session.birthMonth ? MONTH_NAMES[ctx.session.birthMonth - 1] : ""}\n` +
-            `Tahun Lahir: ${ctx.session.birthYear}\n\n` +
-            "Sekarang kamu dapat menggunakan semua fitur Bulaksumur Menfess Bot.\n" +
-            "Ketik /post untuk mulai mengirim menfess!"
+          "🎉✨ Selamat! Pendaftaran kamu telah berhasil! 🎊🎈\n\n" +
+            `👤 Nama Anonym: ${ctx.session.anonName}\n` +
+            `📧 Email: ${ctx.session.emailRegistered}\n` +
+            `⚧️ Jenis Kelamin: ${ctx.session.gender === "M" ? "Laki-laki 👨" : "Perempuan 👩"}\n` +
+            `📅 Bulan Lahir: ${ctx.session.birthMonth ? MONTH_NAMES[ctx.session.birthMonth - 1] : ""}\n` +
+            `🗓️ Tahun Lahir: ${ctx.session.birthYear}\n\n` +
+            "✅ Sekarang kamu dapat menggunakan semua fitur Bulaksumur Menfess Bot.\n" +
+            "💭 Ketik /post untuk mulai mengirim menfess! 🚀"
         );
         break;
 
@@ -489,7 +495,7 @@ export function initSessionModule(bot: Bot<BotContext>): void {
     // Update or send new message with email verification prompt
     const lastMessageId = lastBotMessages.get(userId);
     const verificationMessage =
-      `✅ Kode verifikasi telah dikirim ke ${ctx.session.emailRegistered}\n\n` +
+      `📧 Kode verifikasi telah dikirim ke ${ctx.session.emailRegistered}\n\n` +
       "Silahkan masukkan kode verifikasi 6 digit:\n\n" +
       `(Untuk contoh ini, kode verifikasi: 312894)`;
 
@@ -563,7 +569,7 @@ export function initSessionModule(bot: Bot<BotContext>): void {
  * Generate registration progress message with appropriate checkmarks
  */
 function getProgressMessage(
-  ctx: BotContext,
+  ctx: ParseModeFlavor<BotContext>,
   stage:
     | "anonName"
     | "birthMonth"
