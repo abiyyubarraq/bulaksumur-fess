@@ -14,6 +14,20 @@ import type { BotContext, UserDbData } from "../utils/types";
 const lastBotMessages = new Map<number, number>();
 
 export function initSessionModule(bot: Bot<ParseModeFlavor<BotContext>>): void {
+  bot.on("callback_query:data", async (ctx, next) => {
+    const username = ctx.from?.username;
+
+    if (!username) {
+      await ctx.answerCallbackQuery(
+        "⚠️ Username tidak ditemukan! 🔔 Silahkan buat username Telegram terlebih dahulu untuk menggunakan bot ini."
+      );
+      return;
+    } else {
+      await next();
+      return;
+    }
+  });
+
   bot.on("message", async (ctx, next) => {
     if (isChatFromUserToGroup(ctx)) {
       if (isForwardedMenfessFromChannelToGroup(ctx)) {
