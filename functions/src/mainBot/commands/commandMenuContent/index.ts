@@ -95,7 +95,7 @@ export async function sendReportFeedbackMenu(ctx: ParseModeFlavor<BotContext>) {
     .row()
     .text("« BACK", "back_to_main_menu");
 
-  await ctx.editMessageText("Apa hal yang ingin kamu sampaikan?", {
+  await ctx.editMessageText("🫡 Apa hal yang ingin kamu sampaikan?", {
     reply_markup: keyboard,
   });
 }

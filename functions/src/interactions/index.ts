@@ -43,26 +43,6 @@ export async function postMenfessInteraction(
   }
 }
 
-export function isForwardedMenfessFromChannelToGroup(
-  ctx: ParseModeFlavor<BotContext>
-): boolean {
-  return Boolean(
-    ctx.senderChat?.id === botConfig.channelGroupChatIdNumber &&
-      ctx.chat?.id === botConfig.groupChatIdNumber &&
-      ctx.message?.message_id &&
-      extractMenfessUID(ctx.message.text)
-  );
-}
-
-export function isChatFromUserToGroup(
-  ctx: ParseModeFlavor<BotContext>
-): boolean {
-  return Boolean(
-    ctx.update?.message?.chat?.id &&
-      ctx.update?.message?.chat?.id === Number(botConfig.groupChatIdNumber)
-  );
-}
-
 export function initInteractionHandlers(
   bot: Bot<ParseModeFlavor<BotContext>>
 ): void {

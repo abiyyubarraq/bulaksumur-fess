@@ -3,13 +3,14 @@ import { FieldValue } from "firebase-admin/firestore";
 import { Bot, InlineKeyboard } from "grammy";
 import moment from "moment";
 import { postMenfessInteraction } from "../interactions";
-import { isForwardedMenfessFromChannelToGroup } from "../interactions";
+
 import { botConfig } from "../utils/config";
 import { db } from "../utils/firebase";
 import {
   containsTrigger,
   generateUID,
   getFormattedDate,
+  isForwardedMenfessFromChannelToGroup,
   isValidMessage,
 } from "../utils/helpers";
 import type {
@@ -21,10 +22,10 @@ import type {
 const userStates = new Map<number, ListenMenfessState>();
 
 const waitingForMenfessMessage =
-  `Balas dengan isi Menfess Kamu\n\n` +
-  `Menfess hanya bisa berupa text & photo yang terdapat keyword trigger ${botConfig.postTrigger}.\n\n` +
-  `❕Menfess berupa text panjang minimal 32 karakter dan maksimal 888 karakter. Untuk Menfess dengan media panjang maksimal adalah 260 karakter.\n\n` +
-  `❕Hanya boleh karakter ASCII dengan maksimal 2 baris baru, diperbolehkan memakai format text telegram.`;
+  `🔮 Balas dengan isi Menfess Kamu ✨\n\n` +
+  `Menfess hanya bisa berupa text & photo yang terdapat keyword trigger ${botConfig.postTrigger} 👍.\n\n` +
+  `❕Menfess berupa text panjang minimal 32 karakter dan maksimal 888 karakter. Untuk Menfess dengan media panjang maksimal adalah 260 karakter. 😊\n\n` +
+  `❕Hanya boleh karakter ASCII dengan maksimal 2 baris baru, diperbolehkan memakai format text telegram. ✨`;
 
 export function initPostHandlers(bot: Bot<ParseModeFlavor<BotContext>>): void {
   bot.on(["message:text", "message:photo"], async (ctx, next) => {
@@ -40,7 +41,6 @@ export function initPostHandlers(bot: Bot<ParseModeFlavor<BotContext>>): void {
       userStates.delete(userId);
 
       try {
-        // Delete the waiting message if it exists
         if (state.messageToDelete) {
           try {
             await ctx.api.deleteMessage(ctx.chat.id, state.messageToDelete);
@@ -49,7 +49,6 @@ export function initPostHandlers(bot: Bot<ParseModeFlavor<BotContext>>): void {
           }
         }
 
-        // Check for trigger word in the message
         let messageText = "";
 
         if (ctx.message.text) {

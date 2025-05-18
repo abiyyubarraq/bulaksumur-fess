@@ -1,6 +1,7 @@
 import type { ParseModeFlavor } from "@grammyjs/parse-mode";
 import { Bot } from "grammy";
 import {
+  sendPasteChannelCommentLinkMenu,
   sendPasteChannelLinkMenu,
   sendPasteGroupLinkMenu,
 } from "../../pasteLinkHandler";
@@ -19,14 +20,53 @@ import {
 } from "./commandMenuContent";
 
 export function initCommands(bot: Bot<ParseModeFlavor<BotContext>>): void {
+  bot.hears(/^@.+/, async (ctx) => {
+    await sendViewProfileMenu(ctx);
+  });
+
+  bot.hears(
+    new RegExp(`https://t\\.me/${botConfig.channelId.replace("@", "")}/\\d+$`),
+    async (ctx) => {
+      await sendPasteChannelLinkMenu(ctx);
+    }
+  );
+
+  bot.hears(
+    new RegExp(
+      `https://t\\.me/${botConfig.groupChatId.replace("@", "")}/\\d+$`
+    ),
+    async (ctx) => {
+      await sendPasteGroupLinkMenu(ctx);
+    }
+  );
+
+  bot.hears(
+    new RegExp(
+      `https://t\\.me/${botConfig.channelId.replace("@", "")}/(\\d+)(\\?comment=(\\d+))?$`
+    ),
+    async (ctx) => {
+      await sendPasteChannelCommentLinkMenu(ctx);
+    }
+  );
+
   bot.on("message:entities:bot_command", async (ctx, next) => {
     const receivedCmd = ctx.message.text?.split(" ")[0];
+    if (
+      receivedCmd &&
+      !ctx.session.isRegistered &&
+      !"start".includes(receivedCmd.substring(1))
+    ) {
+      await ctx.reply(
+        "⚠️ Untuk pengguna yang belum terdaftar pada bot ini, hanya bisa menggunakan command /start ✨ untuk mendaftar ke bot."
+      );
+      return;
+    }
     if (
       receivedCmd &&
       !["menu", "help", "rules"].includes(receivedCmd.substring(1))
     ) {
       await ctx.reply(
-        "Command not found. Use /help to see available commands."
+        "⚠️ Perintah tidak ditemukan. Gunakan /help untuk melihat perintah yang tersedia."
       );
       return;
     } else {
@@ -34,24 +74,6 @@ export function initCommands(bot: Bot<ParseModeFlavor<BotContext>>): void {
       return;
     }
   });
-
-  bot.hears(/^@.+/, async (ctx) => {
-    await sendViewProfileMenu(ctx);
-  });
-
-  bot.hears(
-    new RegExp(`https://t\\.me/${botConfig.channelId.replace("@", "")}/`),
-    async (ctx) => {
-      await sendPasteChannelLinkMenu(ctx);
-    }
-  );
-
-  bot.hears(
-    new RegExp(`https://t\\.me/${botConfig.groupChatId.replace("@", "")}/`),
-    async (ctx) => {
-      await sendPasteGroupLinkMenu(ctx);
-    }
-  );
 
   // Init Command
   bot.command("help", async (ctx) => {

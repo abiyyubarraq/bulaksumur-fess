@@ -8,11 +8,11 @@ import type { BotContext, ListenFeedbackState } from "../utils/types";
 const userStates = new Map<number, ListenFeedbackState>();
 
 const waitingForFeedbackMessage = (feedBackType: string) =>
-  `Silahkan balas dengan ${feedBackType} yang ingin kamu sampaikan!` +
+  `💬 Silahkan balas dengan ${feedBackType} yang ingin kamu sampaikan! ✨😊` +
   `\n\n` +
-  `*Note: Minimal 32 karakter dan hanya boleh mengandungi huruf, angka, spasi, dan tanda baca*` +
+  `*Note: Minimal 32 karakter dan hanya boleh mengandungi huruf, angka, spasi, dan tanda baca* 👍` +
   `\n\n` +
-  `Gunakan bahasa yang sopan ky kmu ngchat admin fakultas y`;
+  `Gunakan bahasa yang sopan ky kmu ngchat admin fakultas y 😊`;
 
 export function initSendFeedbackHandlers(
   bot: Bot<ParseModeFlavor<BotContext>>
@@ -27,11 +27,7 @@ export function initSendFeedbackHandlers(
 
       try {
         if (state.messageToDelete) {
-          try {
-            await ctx.api.deleteMessage(ctx.chat.id, state.messageToDelete);
-          } catch (error) {
-            console.error("Failed to delete message:", error);
-          }
+          await ctx.api.deleteMessage(ctx.chat.id, state.messageToDelete);
         }
 
         const messageText = ctx.message.text;
@@ -93,17 +89,13 @@ export async function startSendFeedBackListener(
   ) {
     await ctx.deleteMessage();
     await ctx.reply(
-      "You can only send feedback once per 12 hours. Please try again later."
+      "⏳ Kamu cuma bisa kirim feedback sekali dalam 12 jam. Coba lagi nanti ya! 😊"
     );
     return;
   }
   const userId = ctx.from?.id;
   if (!userId) return;
 
-  // If callback query, answer it
-  if (ctx.callbackQuery) {
-    await ctx.answerCallbackQuery();
-  }
   const keyboard = new InlineKeyboard();
   keyboard.text("« BACK", "back_to_send_feedback_menu");
   // Set user state to waiting for content
@@ -119,5 +111,4 @@ export async function startSendFeedBackListener(
     messageToDelete: sentMessage?.message_id,
     feedBackType,
   });
-  ctx.session.route = "send_feedback";
 }

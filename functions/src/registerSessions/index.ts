@@ -1,14 +1,17 @@
 import { Bot, InlineKeyboard } from "grammy";
 
 import type { ParseModeFlavor } from "@grammyjs/parse-mode";
-import {
-  isChatFromUserToGroup,
-  isForwardedMenfessFromChannelToGroup,
-} from "../interactions";
+
 import { botConfig } from "../utils/config";
 import { MONTH_NAMES } from "../utils/constants";
 import { db } from "../utils/firebase";
-import { isValidEmail, isValidName, matchCallbackData } from "../utils/helpers";
+import {
+  isChatFromUserToGroup,
+  isForwardedMenfessFromChannelToGroup,
+  isValidEmail,
+  isValidName,
+  matchCallbackData,
+} from "../utils/helpers";
 import type { BotContext, UserDbData } from "../utils/types";
 
 const lastBotMessages = new Map<number, number>();
@@ -81,6 +84,7 @@ export function initSessionModule(bot: Bot<ParseModeFlavor<BotContext>>): void {
     }
 
     if (ctx.session.isBanned) {
+      ctx.session.isRegistered = false;
       await ctx.reply(
         "❌ Maaf, kamu tidak diizinkan berinteraksi dengan bot ini. 🚫"
       );
@@ -97,6 +101,7 @@ export function initSessionModule(bot: Bot<ParseModeFlavor<BotContext>>): void {
       memberStatus.status === "kicked" ||
       memberStatus.status === "restricted"
     ) {
+      ctx.session.isRegistered = false;
       await ctx.reply(
         `⚠️ Maaf, kamu belum join ke channel\n\n🔔 Silahkan join ke channel ${botConfig.channelId} terlebih dahulu.`
       );
@@ -104,7 +109,6 @@ export function initSessionModule(bot: Bot<ParseModeFlavor<BotContext>>): void {
     }
 
     if (ctx.session.isRegistered || ctx.session.registerStep === "complete") {
-      ctx.session.route = "idle_registered";
       await next();
       return;
     }
@@ -117,6 +121,7 @@ export function initSessionModule(bot: Bot<ParseModeFlavor<BotContext>>): void {
         .get();
       if (bannedUserDoc.exists) {
         ctx.session.isBanned = true;
+        ctx.session.isRegistered = false;
         await ctx.reply("❌ Maaf, kamu tidak diizinkan mengirim menfess. 🚫");
         return;
       }
@@ -138,7 +143,7 @@ export function initSessionModule(bot: Bot<ParseModeFlavor<BotContext>>): void {
           ctx.session.premiumStatus = userData.premiumStatus;
           ctx.session.premiumUntil = userData.premiumUntil?.toDate() || null;
           ctx.session.lastUserUpdatedDataWithDb = new Date();
-          ctx.session.route = "idle_registered";
+
           await next();
           return;
         }

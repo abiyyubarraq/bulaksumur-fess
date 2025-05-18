@@ -1,4 +1,7 @@
+import type { ParseModeFlavor } from "@grammyjs/parse-mode";
 import { nanoid } from "nanoid";
+import { botConfig } from "./config";
+import type { BotContext } from "./types";
 
 /**
  * Get a formatted date string for menfess posts
@@ -215,4 +218,24 @@ export function sanitizeMessage(message: string): string {
   const sanitized = trimmed.replace(/[\x00-\x1F\x7F-\x9F]/g, "");
 
   return sanitized;
+}
+
+export function isForwardedMenfessFromChannelToGroup(
+  ctx: ParseModeFlavor<BotContext>
+): boolean {
+  return Boolean(
+    ctx.senderChat?.id === botConfig.channelGroupChatIdNumber &&
+      ctx.chat?.id === botConfig.groupChatIdNumber &&
+      ctx.message?.message_id &&
+      extractMenfessUID(ctx.message.text)
+  );
+}
+
+export function isChatFromUserToGroup(
+  ctx: ParseModeFlavor<BotContext>
+): boolean {
+  return Boolean(
+    ctx.update?.message?.chat?.id &&
+      ctx.update?.message?.chat?.id === Number(botConfig.groupChatIdNumber)
+  );
 }
