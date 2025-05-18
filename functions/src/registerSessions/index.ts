@@ -114,7 +114,6 @@ export function initSessionModule(bot: Bot<ParseModeFlavor<BotContext>>): void {
     }
 
     if (!ctx.session.isRegistered || !ctx.session.lastUserUpdatedDataWithDb) {
-      // check is user on banned list collection
       const bannedUserDoc = await db
         .collection("bannedUsers")
         .doc(userId.toString())
@@ -125,12 +124,11 @@ export function initSessionModule(bot: Bot<ParseModeFlavor<BotContext>>): void {
         await ctx.reply("❌ Maaf, kamu tidak diizinkan mengirim menfess. 🚫");
         return;
       }
-      // check db
+
       const userDoc = await db.collection("users").doc(userId.toString()).get();
       if (userDoc.exists) {
         const userData = userDoc.data() as UserDbData;
         if (userData.isEmailVerified || userData.registerStep === "complete") {
-          // assign to session
           ctx.session.isRegistered = true;
           ctx.session.registeredAt = userData.registeredAt.toDate();
           ctx.session.emailRegistered = userData.emailRegistered;
@@ -388,11 +386,9 @@ export function initSessionModule(bot: Bot<ParseModeFlavor<BotContext>>): void {
     }
   });
 
-  // Month selection handler
   bot.callbackQuery(/^month_(\d{1,2})$/, async (ctx) => {
     const userId = ctx.from.id;
 
-    // Check if user has a username
     const username = ctx.from.username;
     if (!username) {
       await ctx.answerCallbackQuery({
@@ -423,7 +419,6 @@ export function initSessionModule(bot: Bot<ParseModeFlavor<BotContext>>): void {
 
     await ctx.answerCallbackQuery(`Month ${month} selected`);
 
-    // Update or send new message with birth year prompt
     const lastMessageId = lastBotMessages.get(userId);
     const progressMessage = getProgressMessage(ctx, "birthYear");
 
@@ -460,7 +455,6 @@ export function initSessionModule(bot: Bot<ParseModeFlavor<BotContext>>): void {
   bot.callbackQuery(/^gender_(M|F)$/, async (ctx) => {
     const userId = ctx.from.id;
 
-    // Check if user has a username
     const username = ctx.from.username;
     if (!username) {
       await ctx.answerCallbackQuery({
@@ -489,7 +483,6 @@ export function initSessionModule(bot: Bot<ParseModeFlavor<BotContext>>): void {
       `Gender ${gender === "M" ? "Male" : "Female"} selected`
     );
 
-    // Update or send new message with email prompt
     const lastMessageId = lastBotMessages.get(userId);
     const progressMessage = getProgressMessage(ctx, "email");
 
@@ -520,11 +513,9 @@ export function initSessionModule(bot: Bot<ParseModeFlavor<BotContext>>): void {
     }
   });
 
-  // Confirmation and Reset data handlers
   bot.callbackQuery(/^confirm_data$/, async (ctx) => {
     const userId = ctx.from.id;
 
-    // Check if user has a username
     const username = ctx.from.username;
     if (!username) {
       await ctx.answerCallbackQuery({
@@ -537,8 +528,6 @@ export function initSessionModule(bot: Bot<ParseModeFlavor<BotContext>>): void {
     ctx.session.registerStep = "verifyEmail";
 
     await ctx.answerCallbackQuery("Data confirmed");
-
-    // Update or send new message with email verification prompt
     const lastMessageId = lastBotMessages.get(userId);
     const verificationMessage =
       `📧 Kode verifikasi telah dikirim ke ${ctx.session.emailRegistered}\n\n` +
@@ -568,7 +557,6 @@ export function initSessionModule(bot: Bot<ParseModeFlavor<BotContext>>): void {
   bot.callbackQuery(/^reset_data$/, async (ctx) => {
     const userId = ctx.from.id;
 
-    // Check if user has a username
     const username = ctx.from.username;
     if (!username) {
       await ctx.answerCallbackQuery({
@@ -578,7 +566,6 @@ export function initSessionModule(bot: Bot<ParseModeFlavor<BotContext>>): void {
       return;
     }
 
-    // Reset all session data
     ctx.session.anonName = null;
     ctx.session.birthMonth = null;
     ctx.session.birthYear = null;
@@ -587,10 +574,9 @@ export function initSessionModule(bot: Bot<ParseModeFlavor<BotContext>>): void {
     ctx.session.registerStep = "anonName";
 
     await ctx.answerCallbackQuery(
-      "Data reset, starting registration from beginning"
+      "Berhasil mereset data registrasi, silahkan mulai lagi dari awal. ➿"
     );
 
-    // Update or send new message with anonymous name prompt
     const lastMessageId = lastBotMessages.get(userId);
     const resetMessage = getProgressMessage(ctx, "anonName");
 
@@ -611,9 +597,6 @@ export function initSessionModule(bot: Bot<ParseModeFlavor<BotContext>>): void {
   });
 }
 
-/**
- * Generate registration progress message with appropriate checkmarks
- */
 function getProgressMessage(
   ctx: ParseModeFlavor<BotContext>,
   stage:
@@ -627,22 +610,18 @@ function getProgressMessage(
 ): string {
   let message = `${botConfig.botUserName} --Registrasi Member-\n\n`;
 
-  // Add anonymous name if available
   if (ctx.session.anonName) {
     message += `Nama anonym: ${ctx.session.anonName} ✅\n`;
   }
 
-  // Add birth month if available
   if (ctx.session.birthMonth && stage !== "anonName") {
     message += `Bulan lahir: ${MONTH_NAMES[ctx.session.birthMonth - 1]} ✅\n`;
   }
 
-  // Add birth year if available
   if (ctx.session.birthYear && stage !== "anonName" && stage !== "birthMonth") {
     message += `Tahun lahir: ${ctx.session.birthYear} ✅\n`;
   }
 
-  // Add gender if available
   if (
     ctx.session.gender &&
     stage !== "anonName" &&
@@ -652,7 +631,6 @@ function getProgressMessage(
     message += `Jenis kelamin: ${ctx.session.gender === "M" ? "Laki-laki 👦" : "Perempuan 👧"} ✅\n`;
   }
 
-  // Add email if available
   if (
     ctx.session.emailRegistered &&
     stage !== "anonName" &&
@@ -663,28 +641,27 @@ function getProgressMessage(
     message += `Email: ${ctx.session.emailRegistered} ✅\n`;
   }
 
-  // Add appropriate next prompt based on stage
   switch (stage) {
     case "anonName":
       message +=
-        "Silahkan balas dengan Nama Anonym Kamu.\n" +
+        "🎭 Silahkan balas dengan Nama Anonym Kamu.\n" +
         "Nama anonym hanya boleh huruf abjad & angka saja dengan panjang 5-15 karakter:";
       break;
     case "birthMonth":
-      message += "\nSilahkan pilih bulan lahir kamu:";
+      message += "\n📅 Silahkan pilih bulan lahir kamu:";
       break;
     case "birthYear":
-      message += "\nSilahkan masukkan tahun lahir kamu (contoh: 2005):";
+      message += "\n🕰️ Silahkan masukkan tahun lahir kamu (contoh: 2005):";
       break;
     case "gender":
-      message += "\nSilahkan pilih jenis kelamin kamu:";
+      message += "\n🤔 Silahkan pilih jenis kelamin kamu:";
       break;
     case "email":
-      message += "\nSilahkan masukkan alamat email yujiem kamu:";
+      message += "\n📬 Silahkan masukkan alamat email yujiem kamu:";
       break;
     case "confirmData":
       message +=
-        "\nSilahkan periksa data kamu di atas terutama email yujiem kamu, karena akan digunakan untuk verifikasi, dengan email yujiem yang salah kamu tidak akan bisa mengirim menfess dan berinteraksi dengan menfess lainnya. Apakah sudah benar?";
+        "\n👀 Silahkan periksa data kamu di atas terutama email yujiem kamu, karena akan digunakan untuk verifikasi, dengan email yujiem yang salah kamu tidak akan bisa mengirim menfess dan berinteraksi dengan menfess lainnya. Apakah sudah benar?";
       break;
   }
 
