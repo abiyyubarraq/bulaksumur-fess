@@ -510,9 +510,14 @@ export function initSessionModule(bot: Bot<ParseModeFlavor<BotContext>>): void {
         }
 
         if (!/^\d{6}$/.test(messageText)) {
+          const emailKeyboard = new InlineKeyboard().text(
+            "❌ Reset Email",
+            "reset_email_data"
+          );
           await sendBotMessage(
             "❌ Kode verifikasi tidak valid!\n\n" +
-              "Silahkan masukkan kode 6 digit yang dikirim ke email yujiem kamu:"
+              "Silahkan masukkan kode 6 digit yang dikirim ke email yujiem kamu:",
+            emailKeyboard
           );
           return;
         }
@@ -704,27 +709,71 @@ export function initSessionModule(bot: Bot<ParseModeFlavor<BotContext>>): void {
 
     await ctx.answerCallbackQuery("Data confirmed");
     const lastMessageId = lastBotMessages.get(userId);
+    const keyboard = new InlineKeyboard().text(
+      "❌ Reset Email",
+      "reset_email_data"
+    );
     const verificationMessage =
       `📧 Kode verifikasi telah dikirim ke ${ctx.session.emailRegistered}\n\n` +
       "Silahkan masukkan kode verifikasi 6 digit:\n\n" +
       `(Untuk contoh ini, kode verifikasi: 312894)`;
 
+    if (ctx.chat) {
+      if (lastMessageId) {
+        try {
+          await ctx.api.editMessageText(
+            ctx.chat.id,
+            lastMessageId,
+            verificationMessage,
+            { reply_markup: keyboard }
+          );
+        } catch (error) {
+          console.error("Error editing message:", error);
+          if (ctx.chat) {
+            const sentMessage = await ctx.reply(verificationMessage, {
+              reply_markup: keyboard,
+            });
+            lastBotMessages.set(userId, sentMessage.message_id);
+          }
+        }
+      } else {
+        const sentMessage = await ctx.reply(verificationMessage, {
+          reply_markup: keyboard,
+        });
+        lastBotMessages.set(userId, sentMessage.message_id);
+      }
+    }
+  });
+
+  bot.callbackQuery(/^reset_email_data$/, async (ctx) => {
+    const userId = ctx.from.id;
+
+    const username = ctx.from.username;
+    if (!username) {
+      await ctx.answerCallbackQuery({
+        text: "Username tidak ditemukan! Silahkan buat username Telegram terlebih dahulu.",
+        show_alert: true,
+      });
+      return;
+    }
+    ctx.session.emailRegistered = null;
+    ctx.session.registerStep = "email";
+
+    const lastMessageId = lastBotMessages.get(userId);
+    const resetMessage = getProgressMessage(ctx, "email");
+
     if (lastMessageId && ctx.chat) {
       try {
-        await ctx.api.editMessageText(
-          ctx.chat.id,
-          lastMessageId,
-          verificationMessage
-        );
+        await ctx.api.editMessageText(ctx.chat.id, lastMessageId, resetMessage);
       } catch (error) {
         console.error("Error editing message:", error);
         if (ctx.chat) {
-          const sentMessage = await ctx.reply(verificationMessage);
+          const sentMessage = await ctx.reply(resetMessage);
           lastBotMessages.set(userId, sentMessage.message_id);
         }
       }
     } else if (ctx.chat) {
-      const sentMessage = await ctx.reply(verificationMessage);
+      const sentMessage = await ctx.reply(resetMessage);
       lastBotMessages.set(userId, sentMessage.message_id);
     }
   });
