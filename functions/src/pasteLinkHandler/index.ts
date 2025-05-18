@@ -10,7 +10,7 @@ const userInAnonReplyMode = new Map<
   {
     groupChatId: number;
     senderInfo: string;
-    messageShoulDeleted: (number | undefined)[];
+    messageShoudlDeleted: (number | undefined)[];
   }
 >();
 
@@ -117,11 +117,12 @@ export async function initPasteLinkHandler(
     userInAnonReplyMode.set(ctx.from.id, {
       groupChatId: menfessDbData.groupChatId,
       senderInfo: ctx.session.gender === "M" ? "🕺 #M✘✘" : "💃 #F✘✘",
-      messageShoulDeleted: [
+      messageShoudlDeleted: [
         messageId,
         (botMessage as { message_id: number }).message_id,
       ],
     });
+    ctx.session.route = "send_anon_reply_to_group";
   });
 
   bot.callbackQuery(/^send_anon_reply_to_group_(\d+)$/, async (ctx) => {
@@ -147,11 +148,12 @@ export async function initPasteLinkHandler(
     userInAnonReplyMode.set(ctx.from.id, {
       groupChatId: Number(groupChatId),
       senderInfo: ctx.session.gender === "M" ? "🕺 #M✘✘" : "💃 #F✘✘",
-      messageShoulDeleted: [
+      messageShoudlDeleted: [
         messageId,
         (botMessage as { message_id: number }).message_id,
       ],
     });
+    ctx.session.route = "send_anon_reply_to_group";
   });
 
   bot.on("message:text", async (ctx) => {
@@ -160,11 +162,11 @@ export async function initPasteLinkHandler(
       return;
     }
     if (userInAnonReplyMode.has(userId)) {
-      const { groupChatId, senderInfo, messageShoulDeleted } =
+      const { groupChatId, senderInfo, messageShoudlDeleted } =
         userInAnonReplyMode.get(userId) || {
           groupChatId: 0,
           senderInfo: "",
-          messageShoulDeleted: [],
+          messageShoudlDeleted: [],
         };
 
       const messageId = ctx.message?.message_id;
@@ -175,7 +177,7 @@ export async function initPasteLinkHandler(
           reply_to_message_id: groupChatId,
         }
       );
-      for (const messageId of messageShoulDeleted) {
+      for (const messageId of messageShoudlDeleted) {
         if (messageId) {
           await ctx.api.deleteMessage(ctx.chat.id, messageId);
         }
@@ -184,6 +186,7 @@ export async function initPasteLinkHandler(
       ctx.reply("👌 Reply anonim kamu berhasil dikirim", {
         reply_to_message_id: messageId,
       });
+      ctx.session.route = "idle_registered";
     }
   });
 }

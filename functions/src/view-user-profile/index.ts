@@ -64,9 +64,7 @@ export function initViewUserProfile(
         targetUsername: targetUsername,
       });
 
-      if (ctx.session) {
-        ctx.session.lastSentInteract = new Date();
-      }
+      ctx.session.lastSentInteract = new Date();
     }
 
     const cancelKeyboard = new InlineKeyboard().text(
@@ -81,6 +79,7 @@ export function initViewUserProfile(
       }
     );
     lastBotMessageId = (botMessage as { message_id: number }).message_id;
+    ctx.session.route = "send_anon_message";
   });
 
   bot.callbackQuery("cancel_anon_message", async (ctx) => {
@@ -129,6 +128,7 @@ export function initViewUserProfile(
 
       if (!targetUserId || !targetUsername) {
         await ctx.reply("😔 User tidak ditemukan.");
+        ctx.session.route = "idle_registered";
         return;
       }
 
@@ -151,10 +151,8 @@ export function initViewUserProfile(
       );
 
       usersInAnonMessageMode.delete(ctx.from.id);
-
-      return;
-    }
-    if (ctx.from && userInReportingUserMode.has(ctx.from.id)) {
+      ctx.session.route = "idle_registered";
+    } else if (ctx.from && userInReportingUserMode.has(ctx.from.id)) {
       if (lastBotMessageId) {
         await ctx.api.deleteMessage(ctx.chat?.id || 0, lastBotMessageId);
       }
@@ -167,6 +165,7 @@ export function initViewUserProfile(
       const messageText = ctx.message.text;
       if (!targetUserId || !targetUsername) {
         await ctx.reply("😔 User tidak ditemukan.");
+        ctx.session.route = "idle_registered";
         return;
       }
 
@@ -186,7 +185,7 @@ export function initViewUserProfile(
       );
 
       userInReportingUserMode.delete(ctx.from.id);
-
+      ctx.session.route = "idle_registered";
       return;
     }
     await next();

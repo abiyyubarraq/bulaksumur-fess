@@ -39,6 +39,7 @@ export function createBot(): Bot<ParseModeFlavor<BotContext>> {
       lastPostMenfess: null,
       lastUserUpdatedDataWithDb: null,
       lastSentInteract: null,
+      route: "idle_not_registered",
     };
   }
   bot.use(session({ initial }));

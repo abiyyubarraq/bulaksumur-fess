@@ -119,4 +119,5 @@ export async function startSendFeedBackListener(
     messageToDelete: sentMessage?.message_id,
     feedBackType,
   });
+  ctx.session.route = "send_feedback";
 }

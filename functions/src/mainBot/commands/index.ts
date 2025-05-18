@@ -30,7 +30,7 @@ export function initCommands(bot: Bot<ParseModeFlavor<BotContext>>): void {
       );
       return;
     } else {
-      next();
+      await next();
       return;
     }
   });

@@ -25,7 +25,9 @@ export function initSessionModule(bot: Bot<ParseModeFlavor<BotContext>>): void {
       );
       return;
     } else if (ctx.session.isBanned) {
-      await ctx.reply("❌ Maaf, kamu tidak diizinkan mengirim menfess. 🚫");
+      await ctx.answerCallbackQuery(
+        "❌ Maaf, kamu tidak diizinkan mengirim menfess. 🚫"
+      );
       return;
     }
 
@@ -39,8 +41,8 @@ export function initSessionModule(bot: Bot<ParseModeFlavor<BotContext>>): void {
       memberStatus.status === "kicked" ||
       memberStatus.status === "restricted"
     ) {
-      await ctx.reply(
-        `⚠️ Maaf, kamu belum join ke channel\n\n🔔 Silahkan join ke channel ${botConfig.channelId} terlebih dahulu.`
+      await ctx.answerCallbackQuery(
+        `⚠️ Maaf, kamu belum join ke channel 🔔 Silahkan join ke channel ${botConfig.channelId} terlebih dahulu.`
       );
       return;
     } else {
@@ -79,7 +81,9 @@ export function initSessionModule(bot: Bot<ParseModeFlavor<BotContext>>): void {
     }
 
     if (ctx.session.isBanned) {
-      await ctx.reply("❌ Maaf, kamu tidak diizinkan mengirim menfess. 🚫");
+      await ctx.reply(
+        "❌ Maaf, kamu tidak diizinkan berinteraksi dengan bot ini. 🚫"
+      );
       return;
     }
 
@@ -100,6 +104,7 @@ export function initSessionModule(bot: Bot<ParseModeFlavor<BotContext>>): void {
     }
 
     if (ctx.session.isRegistered || ctx.session.registerStep === "complete") {
+      ctx.session.route = "idle_registered";
       await next();
       return;
     }
@@ -133,6 +138,7 @@ export function initSessionModule(bot: Bot<ParseModeFlavor<BotContext>>): void {
           ctx.session.premiumStatus = userData.premiumStatus;
           ctx.session.premiumUntil = userData.premiumUntil?.toDate() || null;
           ctx.session.lastUserUpdatedDataWithDb = new Date();
+          ctx.session.route = "idle_registered";
           await next();
           return;
         }
