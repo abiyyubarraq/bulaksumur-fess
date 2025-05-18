@@ -2,6 +2,7 @@ import { Bot, InlineKeyboard } from "grammy";
 
 import type { ParseModeFlavor } from "@grammyjs/parse-mode";
 
+import moment from "moment";
 import { botConfig } from "../utils/config";
 import { MONTH_NAMES } from "../utils/constants";
 import { db } from "../utils/firebase";
@@ -15,6 +16,30 @@ import {
 import type { BotContext, UserDbData } from "../utils/types";
 
 const lastBotMessages = new Map<number, number>();
+
+// Define faculty list
+const FACULTY_LIST = [
+  "FMIPA",
+  "FISIPOL",
+  "FEB",
+  "FBIO",
+  "FFIL",
+  "FFARM",
+  "FGEO",
+  "FH",
+  "FIB",
+  "FKKMK",
+  "FKG",
+  "FKH",
+  "FKT",
+  "FTP",
+  "FAPET",
+  "FAPERTA",
+  "FPSIKO",
+  "FT",
+  "SV",
+  "PASCA",
+];
 
 export function initSessionModule(bot: Bot<ParseModeFlavor<BotContext>>): void {
   bot.on("callback_query:data", async (ctx, next) => {
@@ -248,8 +273,8 @@ export function initSessionModule(bot: Bot<ParseModeFlavor<BotContext>>): void {
         }
 
         const year = parseInt(messageText);
-        const currentYear = new Date().getFullYear();
-        if (isNaN(year) || year < 1980 || year > currentYear - 15) {
+        const currentYear = moment().year();
+        if (isNaN(year) || year < 1980 || year > currentYear - 17) {
           const birthYearKeyboard = new InlineKeyboard().text(
             "❌ Reset",
             "reset_data"
@@ -285,6 +310,150 @@ export function initSessionModule(bot: Bot<ParseModeFlavor<BotContext>>): void {
           getProgressMessage(ctx, "gender"),
           resendGenderKeyboard
         );
+        break;
+
+      case "bio":
+        if (!messageText) {
+          const bioKeyboard = new InlineKeyboard().text(
+            "❌ Reset",
+            "reset_data"
+          );
+
+          await sendBotMessage(getProgressMessage(ctx, "bio"), bioKeyboard);
+          return;
+        }
+
+        if (messageText.length > 200 || messageText.length < 5) {
+          const bioKeyboard = new InlineKeyboard().text(
+            "❌ Reset",
+            "reset_data"
+          );
+
+          await sendBotMessage(
+            "❌ Karakter bio harus di antara 5 dan 200 karakter.\n\n" +
+              getProgressMessage(ctx, "bio"),
+            bioKeyboard
+          );
+          return;
+        }
+
+        ctx.session.bio = messageText;
+        ctx.session.registerStep = "faculty";
+
+        const facultyKeyboard = new InlineKeyboard()
+          .text("FMIPA", "faculty_FMIPA")
+          .text("FISIPOL", "faculty_FISIPOL")
+          .text("FEB", "faculty_FEB")
+          .row()
+          .text("FBIO", "faculty_FBIO")
+          .text("FFIL", "faculty_FFIL")
+          .text("FFARM", "faculty_FFARM")
+          .row()
+          .text("FGEO", "faculty_FGEO")
+          .text("FH", "faculty_FH")
+          .text("FIB", "faculty_FIB")
+          .row()
+          .text("FKKMK", "faculty_FKKMK")
+          .text("FKG", "faculty_FKG")
+          .text("FKH", "faculty_FKH")
+          .row()
+          .text("FKT", "faculty_FKT")
+          .text("FTP", "faculty_FTP")
+          .text("FAPET", "faculty_FAPET")
+          .row()
+          .text("FAPERTA", "faculty_FAPERTA")
+          .text("FPSIKO", "faculty_FPSIKO")
+          .text("FT", "faculty_FT")
+          .row()
+          .text("SV", "faculty_SV")
+          .text("PASCA", "faculty_PASCA")
+          .row()
+          .text("❌ Reset", "reset_data");
+
+        await sendBotMessage(
+          getProgressMessage(ctx, "faculty"),
+          facultyKeyboard
+        );
+        break;
+
+      case "faculty":
+        const resendFacultyKeyboard = new InlineKeyboard()
+          .text("FMIPA", "faculty_FMIPA")
+          .text("FISIPOL", "faculty_FISIPOL")
+          .text("FEB", "faculty_FEB")
+          .row()
+          .text("FBIO", "faculty_FBIO")
+          .text("FFIL", "faculty_FFIL")
+          .text("FFARM", "faculty_FFARM")
+          .row()
+          .text("FGEO", "faculty_FGEO")
+          .text("FH", "faculty_FH")
+          .text("FIB", "faculty_FIB")
+          .row()
+          .text("FKKMK", "faculty_FKKMK")
+          .text("FKG", "faculty_FKG")
+          .text("FKH", "faculty_FKH")
+          .row()
+          .text("FKT", "faculty_FKT")
+          .text("FTP", "faculty_FTP")
+          .text("FAPET", "faculty_FAPET")
+          .row()
+          .text("FAPERTA", "faculty_FAPERTA")
+          .text("FPSIKO", "faculty_FPSIKO")
+          .text("FT", "faculty_FT")
+          .row()
+          .text("SV", "faculty_SV")
+          .text("PASCA", "faculty_PASCA")
+          .row()
+          .text("❌ Reset", "reset_data");
+
+        await sendBotMessage(
+          getProgressMessage(ctx, "faculty"),
+          resendFacultyKeyboard
+        );
+        break;
+
+      case "univYear":
+        if (!messageText) {
+          const univYearKeyboard = new InlineKeyboard().text(
+            "❌ Reset",
+            "reset_data"
+          );
+
+          await sendBotMessage(
+            getProgressMessage(ctx, "univYear"),
+            univYearKeyboard
+          );
+          return;
+        }
+
+        const univYear = parseInt(messageText);
+        const univCurrentYear = moment().year();
+        if (isNaN(univYear) || univYear <= 2000 || univYear > univCurrentYear) {
+          const univYearKeyboard = new InlineKeyboard().text(
+            "❌ Reset",
+            "reset_data"
+          );
+
+          await sendBotMessage(
+            "❌ Tahun angkatan tidak valid! Harus di antara 2001 dan " +
+              univCurrentYear +
+              ".\n\n" +
+              getProgressMessage(ctx, "univYear"),
+            univYearKeyboard
+          );
+          return;
+        }
+
+        ctx.session.univYear = univYear;
+        ctx.session.registerStep = "email";
+
+        const emailKeyboard = new InlineKeyboard().text(
+          "❌ Reset",
+          "reset_data"
+        );
+
+        await sendBotMessage(getProgressMessage(ctx, "email"), emailKeyboard);
         break;
 
       case "email":
@@ -359,6 +528,9 @@ export function initSessionModule(bot: Bot<ParseModeFlavor<BotContext>>): void {
           gender: ctx.session.gender,
           birthMonth: ctx.session.birthMonth,
           birthYear: ctx.session.birthYear,
+          bio: ctx.session.bio,
+          faculty: ctx.session.faculty,
+          univYear: ctx.session.univYear,
           registerStep: ctx.session.registerStep,
           isEmailVerified: true,
           registeredAt: ctx.session.registeredAt,
@@ -373,9 +545,12 @@ export function initSessionModule(bot: Bot<ParseModeFlavor<BotContext>>): void {
             `📧 Email: ${ctx.session.emailRegistered}\n` +
             `⚧️ Jenis Kelamin: ${ctx.session.gender === "M" ? "Laki-laki 👨" : "Perempuan 👩"}\n` +
             `📅 Bulan Lahir: ${ctx.session.birthMonth ? MONTH_NAMES[ctx.session.birthMonth - 1] : ""}\n` +
-            `🗓️ Tahun Lahir: ${ctx.session.birthYear}\n\n` +
+            `🗓️ Tahun Lahir: ${ctx.session.birthYear}\n` +
+            `📝 Bio: ${ctx.session.bio || "-"}\n` +
+            `🏫 Fakultas: ${ctx.session.faculty || "-"}\n` +
+            `🎓 Tahun Angkatan: ${ctx.session.univYear || "-"}\n\n` +
             "✅ Sekarang kamu dapat menggunakan semua fitur Bulaksumur Menfess Bot.\n" +
-            "💭 Ketik /post untuk mulai mengirim menfess! 🚀"
+            "💭 Ketik /menu untuk mulai mengirim menfess! 🚀"
         );
         break;
 
@@ -477,16 +652,16 @@ export function initSessionModule(bot: Bot<ParseModeFlavor<BotContext>>): void {
     const gender = genderMatch[1] as "M" | "F";
 
     ctx.session.gender = gender;
-    ctx.session.registerStep = "email";
+    ctx.session.registerStep = "bio";
 
     await ctx.answerCallbackQuery(
       `Gender ${gender === "M" ? "Male" : "Female"} selected`
     );
 
     const lastMessageId = lastBotMessages.get(userId);
-    const progressMessage = getProgressMessage(ctx, "email");
+    const progressMessage = getProgressMessage(ctx, "bio");
 
-    const emailKeyboard = new InlineKeyboard().text("❌ Reset", "reset_data");
+    const bioKeyboard = new InlineKeyboard().text("❌ Reset", "reset_data");
 
     if (lastMessageId && ctx.chat) {
       try {
@@ -494,20 +669,20 @@ export function initSessionModule(bot: Bot<ParseModeFlavor<BotContext>>): void {
           ctx.chat.id,
           lastMessageId,
           progressMessage,
-          { reply_markup: emailKeyboard }
+          { reply_markup: bioKeyboard }
         );
       } catch (error) {
         console.error("Error editing message:", error);
         if (ctx.chat) {
           const sentMessage = await ctx.reply(progressMessage, {
-            reply_markup: emailKeyboard,
+            reply_markup: bioKeyboard,
           });
           lastBotMessages.set(userId, sentMessage.message_id);
         }
       }
     } else if (ctx.chat) {
       const sentMessage = await ctx.reply(progressMessage, {
-        reply_markup: emailKeyboard,
+        reply_markup: bioKeyboard,
       });
       lastBotMessages.set(userId, sentMessage.message_id);
     }
@@ -570,6 +745,9 @@ export function initSessionModule(bot: Bot<ParseModeFlavor<BotContext>>): void {
     ctx.session.birthMonth = null;
     ctx.session.birthYear = null;
     ctx.session.gender = null;
+    ctx.session.bio = null;
+    ctx.session.faculty = null;
+    ctx.session.univYear = null;
     ctx.session.emailRegistered = null;
     ctx.session.registerStep = "anonName";
 
@@ -595,6 +773,72 @@ export function initSessionModule(bot: Bot<ParseModeFlavor<BotContext>>): void {
       lastBotMessages.set(userId, sentMessage.message_id);
     }
   });
+
+  bot.callbackQuery(/^faculty_(.+)$/, async (ctx) => {
+    const userId = ctx.from.id;
+
+    const username = ctx.from.username;
+    if (!username) {
+      await ctx.answerCallbackQuery({
+        text: "Username tidak ditemukan! Silahkan buat username Telegram terlebih dahulu.",
+        show_alert: true,
+      });
+      return;
+    }
+
+    const facultyMatch = matchCallbackData(
+      /^faculty_(.+)$/,
+      ctx.callbackQuery.data
+    );
+
+    if (!facultyMatch || !facultyMatch[1]) {
+      await ctx.answerCallbackQuery("Invalid faculty selection");
+      return;
+    }
+
+    const faculty = facultyMatch[1];
+    if (!FACULTY_LIST.includes(faculty)) {
+      await ctx.answerCallbackQuery("Invalid faculty");
+      return;
+    }
+
+    ctx.session.faculty = faculty;
+    ctx.session.registerStep = "univYear";
+
+    await ctx.answerCallbackQuery(`Faculty ${faculty} selected`);
+
+    const lastMessageId = lastBotMessages.get(userId);
+    const progressMessage = getProgressMessage(ctx, "univYear");
+
+    const univYearKeyboard = new InlineKeyboard().text(
+      "❌ Reset",
+      "reset_data"
+    );
+
+    if (lastMessageId && ctx.chat) {
+      try {
+        await ctx.api.editMessageText(
+          ctx.chat.id,
+          lastMessageId,
+          progressMessage,
+          { reply_markup: univYearKeyboard }
+        );
+      } catch (error) {
+        console.error("Error editing message:", error);
+        if (ctx.chat) {
+          const sentMessage = await ctx.reply(progressMessage, {
+            reply_markup: univYearKeyboard,
+          });
+          lastBotMessages.set(userId, sentMessage.message_id);
+        }
+      }
+    } else if (ctx.chat) {
+      const sentMessage = await ctx.reply(progressMessage, {
+        reply_markup: univYearKeyboard,
+      });
+      lastBotMessages.set(userId, sentMessage.message_id);
+    }
+  });
 }
 
 function getProgressMessage(
@@ -604,6 +848,9 @@ function getProgressMessage(
     | "birthMonth"
     | "birthYear"
     | "gender"
+    | "bio"
+    | "faculty"
+    | "univYear"
     | "email"
     | "confirmData"
     | "complete"
@@ -632,11 +879,47 @@ function getProgressMessage(
   }
 
   if (
-    ctx.session.emailRegistered &&
+    ctx.session.bio &&
     stage !== "anonName" &&
     stage !== "birthMonth" &&
     stage !== "birthYear" &&
     stage !== "gender"
+  ) {
+    message += `Bio: ${ctx.session.bio} ✅\n`;
+  }
+
+  if (
+    ctx.session.faculty &&
+    stage !== "anonName" &&
+    stage !== "birthMonth" &&
+    stage !== "birthYear" &&
+    stage !== "gender" &&
+    stage !== "bio"
+  ) {
+    message += `Fakultas: ${ctx.session.faculty} ✅\n`;
+  }
+
+  if (
+    ctx.session.univYear &&
+    stage !== "anonName" &&
+    stage !== "birthMonth" &&
+    stage !== "birthYear" &&
+    stage !== "gender" &&
+    stage !== "bio" &&
+    stage !== "faculty"
+  ) {
+    message += `Tahun Angkatan: ${ctx.session.univYear} ✅\n`;
+  }
+
+  if (
+    ctx.session.emailRegistered &&
+    stage !== "anonName" &&
+    stage !== "birthMonth" &&
+    stage !== "birthYear" &&
+    stage !== "gender" &&
+    stage !== "bio" &&
+    stage !== "faculty" &&
+    stage !== "univYear"
   ) {
     message += `Email: ${ctx.session.emailRegistered} ✅\n`;
   }
@@ -654,7 +937,17 @@ function getProgressMessage(
       message += "\n🕰️ Silahkan masukkan tahun lahir kamu (contoh: 2005):";
       break;
     case "gender":
-      message += "\n🤔 Silahkan pilih jenis kelamin kamu:";
+      message += "\n♀️♂️ Silahkan pilih jenis kelamin kamu:";
+      break;
+    case "bio":
+      message +=
+        "\n📝 Silahkan masukkan bio singkat tentang dirimu (maks. 200 karakter, minimal 5 karakter):";
+      break;
+    case "faculty":
+      message += "\n🏫 Silahkan pilih fakultas kamu:";
+      break;
+    case "univYear":
+      message += "\n🎓 Silahkan masukkan tahun angkatan kamu (contoh: 2023):";
       break;
     case "email":
       message += "\n📬 Silahkan masukkan alamat email yujiem kamu:";

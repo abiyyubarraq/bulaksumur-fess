@@ -39,6 +39,12 @@ export function createBot(): Bot<ParseModeFlavor<BotContext>> {
       lastPostMenfess: null,
       lastUserUpdatedDataWithDb: null,
       lastSentInteract: null,
+      bio: null,
+      faculty: null,
+      univYear: null,
+      agreement1: null,
+      agreement2: null,
+      agreement3: null,
     };
   }
   bot.use(session({ initial }));

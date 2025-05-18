@@ -11,13 +11,25 @@ export interface SessionData {
   gender: "M" | "F" | null;
   birthMonth: number | null;
   birthYear: number | null;
+  bio: string | null;
+  faculty: string | null;
+  univYear: number | null;
+  agreement1: boolean | null;
+  agreement2: boolean | null;
+  agreement3: boolean | null;
   registerStep:
     | "anonName"
     | "birthMonth"
     | "birthYear"
     | "gender"
+    | "bio"
+    | "faculty"
+    | "univYear"
     | "email"
     | "confirmData"
+    | "agreement1"
+    | "agreement2"
+    | "agreement3"
     | "verifyEmail"
     | "complete";
   isBanned: boolean;
@@ -66,13 +78,25 @@ export interface UserDbData {
   gender: "M" | "F";
   birthMonth: number;
   birthYear: number;
+  bio: string;
+  faculty: string;
+  univYear: number;
+  agreement1: boolean;
+  agreement2: boolean;
+  agreement3: boolean;
   registerStep:
     | "anonName"
     | "birthMonth"
     | "birthYear"
     | "gender"
+    | "bio"
+    | "faculty"
+    | "univYear"
     | "email"
     | "confirmData"
+    | "agreement1"
+    | "agreement2"
+    | "agreement3"
     | "verifyEmail"
     | "complete";
   isEmailVerified: boolean;

@@ -53,16 +53,6 @@ export function initCommands(bot: Bot<ParseModeFlavor<BotContext>>): void {
     const receivedCmd = ctx.message.text?.split(" ")[0];
     if (
       receivedCmd &&
-      !ctx.session.isRegistered &&
-      !"start".includes(receivedCmd.substring(1))
-    ) {
-      await ctx.reply(
-        "⚠️ Untuk pengguna yang belum terdaftar pada bot ini, hanya bisa menggunakan command /start ✨ untuk mendaftar ke bot."
-      );
-      return;
-    }
-    if (
-      receivedCmd &&
       !["menu", "help", "rules"].includes(receivedCmd.substring(1))
     ) {
       await ctx.reply(
