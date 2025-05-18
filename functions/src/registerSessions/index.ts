@@ -17,7 +17,6 @@ import type { BotContext, UserDbData } from "../utils/types";
 
 const lastBotMessages = new Map<number, number>();
 
-// Define faculty list
 const FACULTY_LIST = [
   "FMIPA",
   "FISIPOL",
@@ -71,6 +70,31 @@ export function initSessionModule(bot: Bot<ParseModeFlavor<BotContext>>): void {
     ) {
       await ctx.answerCallbackQuery(
         `⚠️ Maaf, kamu belum join ke channel 🔔 Silahkan join ke channel ${botConfig.channelId} terlebih dahulu.`
+      );
+      return;
+    }
+    if (ctx.session.registerStep !== "complete") {
+      const callbackQueryAllowed = [
+        "agreement_agree_",
+        "disagree_agreement_",
+        "month_",
+        "gender_",
+        "faculty_",
+        "reset_data",
+        "reset_email_data",
+        "confirm_data",
+      ];
+
+      const isAllowed = callbackQueryAllowed.some((allowed) =>
+        ctx.callbackQuery.data.startsWith(allowed)
+      );
+      if (isAllowed) {
+        await next();
+        return;
+      }
+
+      await ctx.answerCallbackQuery(
+        "⚠️ Maaf, kamu belum melakukan pendaftaran atau belum menyetujui peraturan dan ketentuan base yang berlaku."
       );
       return;
     } else {
@@ -153,7 +177,11 @@ export function initSessionModule(bot: Bot<ParseModeFlavor<BotContext>>): void {
       const userDoc = await db.collection("users").doc(userId.toString()).get();
       if (userDoc.exists) {
         const userData = userDoc.data() as UserDbData;
-        if (userData.isEmailVerified || userData.registerStep === "complete") {
+        if (
+          ["complete", "agreement1", "agreement2", "agreement3"].includes(
+            userData.registerStep
+          )
+        ) {
           ctx.session.isRegistered = true;
           ctx.session.registeredAt = userData.registeredAt.toDate();
           ctx.session.emailRegistered = userData.emailRegistered;
@@ -161,6 +189,9 @@ export function initSessionModule(bot: Bot<ParseModeFlavor<BotContext>>): void {
           ctx.session.birthMonth = userData.birthMonth;
           ctx.session.birthYear = userData.birthYear;
           ctx.session.anonName = userData.anonName;
+          ctx.session.faculty = userData.faculty;
+          ctx.session.univYear = userData.univYear;
+          ctx.session.bio = userData.bio;
           ctx.session.registerStep = userData.registerStep;
           ctx.session.userId = userId;
           ctx.session.premiumStatus = userData.premiumStatus;
@@ -522,7 +553,7 @@ export function initSessionModule(bot: Bot<ParseModeFlavor<BotContext>>): void {
           return;
         }
 
-        ctx.session.registerStep = "complete";
+        ctx.session.registerStep = "agreement1";
         ctx.session.isRegistered = true;
         ctx.session.registeredAt = new Date();
 
@@ -554,8 +585,7 @@ export function initSessionModule(bot: Bot<ParseModeFlavor<BotContext>>): void {
             `📝 Bio: ${ctx.session.bio || "-"}\n` +
             `🏫 Fakultas: ${ctx.session.faculty || "-"}\n` +
             `🎓 Tahun Angkatan: ${ctx.session.univYear || "-"}\n\n` +
-            "✅ Sekarang kamu dapat menggunakan semua fitur Bulaksumur Menfess Bot.\n" +
-            "💭 Ketik /menu untuk mulai mengirim menfess! 🚀"
+            `📏 Sekarang kamu perlu membaca, memahami, dan menyetujui beberapa ketentuan dan peraturan dari BOT ${botConfig.botUserName} dan channel ${botConfig.channelId}.\nKetik /menu untuk melihat peraturan dan ketentuan base yang berlaku.`
         );
         break;
 
@@ -999,7 +1029,8 @@ function getProgressMessage(
       message += "\n🎓 Silahkan masukkan tahun angkatan kamu (contoh: 2023):";
       break;
     case "email":
-      message += "\n📬 Silahkan masukkan alamat email yujiem kamu:";
+      message +=
+        "\n📬 Silahkan masukkan alamat email yujiem kamu (contoh: yujiem@mail.ugm.ac.id):";
       break;
     case "confirmData":
       message +=

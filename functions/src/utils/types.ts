@@ -105,6 +105,7 @@ export interface UserDbData {
   menfessCount: number;
   premiumStatus: 1 | 2 | 3 | null;
   premiumUntil: Timestamp | null;
+  agreementSignAt: Timestamp | null;
 }
 
 export interface MenfessDbData {
