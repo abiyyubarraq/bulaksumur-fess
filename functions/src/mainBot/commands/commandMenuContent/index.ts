@@ -1,11 +1,51 @@
 import type { ParseModeFlavor } from "@grammyjs/parse-mode";
 import { InlineKeyboard } from "grammy";
 import moment from "moment";
+import { AGREEMENTS, agreementFooter } from "../../../tosMenu";
 import { botConfig } from "../../../utils/config";
 import { MONTH_NAMES } from "../../../utils/constants";
 import { db } from "../../../utils/firebase";
 import { getPremiumBadge } from "../../../utils/helpers";
 import type { BotContext, UserDbData } from "../../../utils/types";
+
+const footer =
+  `👪 Channel Base: @${botConfig.channelId.replace("@", "")}\n` +
+  `👨‍💼 Admin Base: @${botConfig.adminBaseUserName}\n` +
+  `👮‍♂️ Moderator Base: @${botConfig.moderatorBaseUserName}\n`;
+
+const myData = (ctx: ParseModeFlavor<BotContext>, userId: number) => {
+  const bio = ctx.session.bio || "";
+  const userName = ctx.from?.username || "-";
+  const birthMonth =
+    ctx.session.birthMonth && MONTH_NAMES[ctx.session.birthMonth - 1]
+      ? MONTH_NAMES[ctx.session.birthMonth - 1]
+      : "-";
+  const birthYear = ctx.session.birthYear || "-";
+  const premiumStatus = ctx.session.premiumStatus;
+  const gender = ctx.session.gender || "-";
+  const anonName = ctx.session.anonName || "-";
+  const faculty = ctx.session.faculty;
+  const univYear = ctx.session.univYear;
+  const emailRegistered = ctx.session.emailRegistered;
+  const registeredAt = ctx.session.registeredAt;
+  const premiumUntil = ctx.session.premiumUntil;
+
+  return (
+    `<blockquote>${bio}</blockquote>\n\n` +
+    `👽 Name : @${userName}${getPremiumBadge(premiumStatus)}\n` +
+    `👤 AnonName : ${anonName}\n` +
+    `🚹 Sex : ${gender === "M" ? "#M♂" : "#F♀"}\n` +
+    `👶 Birth : ${birthMonth} ${birthYear}\n` +
+    `🏠 Faculty : ${faculty}\n` +
+    `🎓 Univ Year : ${univYear}\n` +
+    `💌 Email : ${emailRegistered}\n` +
+    // `⚡ Score : ${1000}\n` +
+    // `💰 Gold : ${2000}\n\n` +
+    `🆔 ID : ${userId}\n` +
+    `⏱️ Join time : ${registeredAt ? moment(registeredAt).format("DD/MM/YYYY HH:mm") : "-"}\n\n` +
+    `📅 Premium until : ${premiumUntil ? moment(premiumUntil).format("DD/MM/YYYY HH:mm") : "-"}\n\n`
+  );
+};
 
 export async function sendMainMenu(ctx: ParseModeFlavor<BotContext>) {
   const userId = ctx.from?.id;
@@ -14,9 +54,9 @@ export async function sendMainMenu(ctx: ParseModeFlavor<BotContext>) {
   const keyboard = new InlineKeyboard();
 
   keyboard
-    .text("Kritik, Saran, Tanya, Lapor 📝", "report_feedback")
+    .text("Kritik, Saran, Lapor 🗞️", "report_feedback")
     .row()
-    .text("Profile 👤", "view_profile")
+    .text("Profile 👤", "view_my_profile")
     .text("Inbox 📬", "view_inbox")
     .row()
     // .text("Riwayat 🌟", "view_history")
@@ -27,48 +67,45 @@ export async function sendMainMenu(ctx: ParseModeFlavor<BotContext>) {
     .row()
     .text("Kirim ▶️", "start_post");
 
-  const username = ctx.from?.username || "-";
-  const birthMonth =
-    ctx.session.birthMonth && MONTH_NAMES[ctx.session.birthMonth - 1]
-      ? MONTH_NAMES[ctx.session.birthMonth - 1]
-      : "-";
-  const birthYear = ctx.session.birthYear || "-";
-  const premiumStatus = ctx.session.premiumStatus;
+  const messageText = myData(ctx, userId) + footer;
 
-  // Use editMessageText for callback queries, and reply for commands
-  const messageText =
-    `👽 Name : @${username}${getPremiumBadge(premiumStatus)}\n` +
-    `👤 AnonName : ${ctx.session.anonName}\n` +
-    `🚹 Sex : ${ctx.session.gender === "M" ? "#M♂" : "#F♀"}\n` +
-    `👶 Birth : ${birthMonth} ${birthYear}\n` +
-    // `⚡ Score : ${1000}\n` +
-    // `💰 Gold : ${2000}\n\n` +
-    `🆔 ID : ${userId}\n` +
-    `⏱️ Join time : ${ctx.session.registeredAt ? moment(ctx.session.registeredAt).format("DD/MM/YYYY HH:mm") : "-"}\n\n` +
-    `📅 Premium until : ${ctx.session.premiumUntil ? moment(ctx.session.premiumUntil).format("DD/MM/YYYY HH:mm") : "-"}\n\n` +
-    `👪 Channel Base: @${botConfig.channelId.replace("@", "")}\n` +
-    `👨‍💼 Admin Base: @${botConfig.adminBaseUserName}\n` +
-    `👮‍♂️ Moderator Base: @${botConfig.moderatorBaseUserName}\n`;
-
-  if (ctx.callbackQuery) {
-    await ctx.editMessageText(messageText, {
-      reply_markup: keyboard,
-    });
-  } else {
-    await ctx.reply(messageText, {
-      reply_markup: keyboard,
-    });
-  }
+  await ctx.reply(messageText, {
+    reply_markup: keyboard,
+    parse_mode: "HTML",
+  });
 }
 
+export const viewMyProfileMenu = async (ctx: ParseModeFlavor<BotContext>) => {
+  const userId = ctx.from?.id;
+  if (!userId) return;
+
+  const keyboard = new InlineKeyboard()
+    .text("Statistic 📊", "view_my_statistic")
+    .text("Setting ⚙️", "view_my_settings")
+    .row()
+    .text("« BACK", "back_to_main_menu");
+  await ctx.editMessageText(myData(ctx, userId), {
+    reply_markup: keyboard,
+    parse_mode: "HTML",
+  });
+};
+
 export async function sendRulesMenu(ctx: ParseModeFlavor<BotContext>) {
-  await ctx.reply("Rules"); // TODO: Add rules menu
+  await ctx.reply(AGREEMENTS[1].content + agreementFooter, {
+    parse_mode: "HTML",
+  });
+  await ctx.reply(AGREEMENTS[2].content + agreementFooter, {
+    parse_mode: "HTML",
+  });
+  await ctx.reply(AGREEMENTS[3].content + agreementFooter, {
+    parse_mode: "HTML",
+  });
 }
 export async function sendHelpMenu(ctx: ParseModeFlavor<BotContext>) {
   await ctx.reply(
     "Bulaksumur Menfess Bot Commands:\n\n" +
       "/menu - Get the main menu\n" +
-      "/help - Show this help message\n\n" +
+      "/help - Show this help message\n" +
       "/rules - Show the rules\n"
   );
 }
@@ -150,19 +187,19 @@ export async function sendViewProfileMenu(ctx: ParseModeFlavor<BotContext>) {
     // .row()
     // .text("🚫 Block", `user_${userId}_block_${userDbData.userId}_${userDbData.username}`)
     .text(
-      "⚠️ Report",
-      `user_${userId}_report_${userDbData.userId}_${userDbData.username}`
+      "📩 Anon Message",
+      `user_${userId}_send_anon_to_${userDbData.userId}_${userDbData.username}`
     )
     .row()
     .text(
-      "📩 Anon Message",
-      `user_${userId}_send_anon_to_${userDbData.userId}_${userDbData.username}`
+      "⚠️ Report",
+      `user_${userId}_report_${userDbData.userId}_${userDbData.username}`
     )
     .url("👤 PROFILE", `https://t.me/${userDbData.username}`);
 
   // Format profile display text with dividers for better readability
-  let profileText = `🔹 Profile\n@${userDbData.username}\n💬 --Placeholder for bio-- 💬\n\n`;
-  profileText += `👤 Name : ${userDbData.anonName}\n`;
+  let profileText = `<blockquote>${userDbData.bio}</blockquote>\n\n`;
+  profileText += `👤 Name : ${userDbData.anonName}${getPremiumBadge(userDbData.premiumStatus)}\n`;
   profileText += `🧬 Sex : ${userDbData.gender === "M" ? "🕺 #M♂" : "💃 #F♀"}\n`;
   // profileText += `📍 Location : -\n`;
   // profileText += `👀 Interest in : #DATING\n\n`;
@@ -176,7 +213,6 @@ export async function sendViewProfileMenu(ctx: ParseModeFlavor<BotContext>) {
 
   // Add user ID and join information
   profileText += `🆔 ID : ${userDbData.userId}\n`;
-  profileText += `@ Username : @${userDbData.username}\n`;
 
   // Format registration date
   const registeredDate = moment(userDbData.registeredAt.toDate());
@@ -188,13 +224,12 @@ export async function sendViewProfileMenu(ctx: ParseModeFlavor<BotContext>) {
   // const formattedLastSeen = lastSeen.format("DD-MM-YYYY HH:mm");
   // profileText += `👁 Last Seen : ${formattedLastSeen}`;
 
-  profileText += `\n📢 Channel Base: @${botConfig.channelId.replace("@", "")}\n`;
-  profileText += `👨‍💼 Admin Base: @${botConfig.adminBaseUserName}\n`;
-  profileText += `👮‍♂️ Moderator Base: @${botConfig.moderatorBaseUserName}\n`;
+  profileText += `\n${footer}`;
 
   // Send the profile display
   await ctx.reply(profileText, {
     reply_markup: profileKeyboard,
+    parse_mode: "HTML",
     reply_to_message_id: messageId,
   });
 }

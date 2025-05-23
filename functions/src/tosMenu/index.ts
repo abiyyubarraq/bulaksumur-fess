@@ -10,11 +10,9 @@ type AgreementItem = {
   nextStep: "agreement1" | "agreement2" | "agreement3" | "complete";
 };
 
-type AgreementMap = {
-  [key: number]: AgreementItem;
-};
-
-const AGREEMENTS: AgreementMap = {
+type AgreementMap = Record<1 | 2 | 3, AgreementItem>;
+export const agreementFooter = `\n\n<u><i>Kamu telah memahami dan setuju akan mematuhi ketentuan di atas</i></u>\n\nTerimakasih ❣️`;
+export const AGREEMENTS: AgreementMap = {
   1: {
     title: `Untuk menggunakan BOT ${botConfig.botUserName} dan bergabung dengan channel ${botConfig.channelId} Anda harus menyetujui pernyataan berikut:`,
     content:
@@ -71,7 +69,7 @@ export function initTosMenu(bot: Bot<ParseModeFlavor<BotContext>>): void {
     agreementNumber: number
   ) {
     try {
-      const agreement = AGREEMENTS[agreementNumber];
+      const agreement = AGREEMENTS[agreementNumber as 1 | 2 | 3];
       if (!agreement) return;
 
       await ctx.reply(agreement.title);
@@ -115,7 +113,7 @@ export function initTosMenu(bot: Bot<ParseModeFlavor<BotContext>>): void {
 
     try {
       const agreementNumber = parseInt(ctx.match[1]);
-      const agreement = AGREEMENTS[agreementNumber];
+      const agreement = AGREEMENTS[agreementNumber as 1 | 2 | 3];
 
       if (!agreement) {
         await ctx.answerCallbackQuery("Invalid agreement");
@@ -136,11 +134,10 @@ export function initTosMenu(bot: Bot<ParseModeFlavor<BotContext>>): void {
       if (!message || !message.text) {
         console.warn("Could not get message text for agreement acceptance");
       } else {
-        const footer = `\n\n<i>Anda telah memahami dan setuju akan mematuhi ketentuan di atas</i>\n\nTerimakasih ❣️`;
         await ctx.api.editMessageText(
           message.chat.id,
           message.message_id,
-          message.text + footer,
+          message.text + agreementFooter,
           { parse_mode: "HTML" }
         );
       }

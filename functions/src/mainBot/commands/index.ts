@@ -17,6 +17,7 @@ import {
   sendSendAnonMessageMenu,
   sendStartPostMenu,
   sendViewProfileMenu,
+  viewMyProfileMenu,
 } from "./commandMenuContent";
 
 export function initCommands(bot: Bot<ParseModeFlavor<BotContext>>): void {
@@ -78,8 +79,17 @@ export function initCommands(bot: Bot<ParseModeFlavor<BotContext>>): void {
     await sendRulesMenu(ctx);
   });
 
+  bot.callbackQuery("view_rules", async (ctx) => {
+    await ctx.editMessageText("...");
+    await sendRulesMenu(ctx);
+  });
+
   bot.callbackQuery("back_to_main_menu", async (ctx) => {
     await sendMainMenu(ctx);
+  });
+
+  bot.callbackQuery("view_my_profile", async (ctx) => {
+    await viewMyProfileMenu(ctx);
   });
 
   // Post Menfess and Send Anon message

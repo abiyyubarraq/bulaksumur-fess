@@ -165,7 +165,7 @@ export function initViewUserProfile(
         return;
       }
 
-      await db.collection(`users/${ctx.from.id}/reports`).add({
+      await db.collection(`users/${targetUserId}/reports`).add({
         reporterId: ctx.from.id,
         reporterUsername: ctx.from.username,
         reportText: sanitizeMessage(messageText),

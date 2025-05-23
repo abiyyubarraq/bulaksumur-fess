@@ -160,7 +160,7 @@ export function initInteractionHandlers(
       );
       await ctx.answerCallbackQuery("❤️ Your request sent to user");
     } else if (action === "report") {
-      await db.collection(`users/${userId}/reports`).add({
+      await db.collection(`users/${menfessDbData.senderId}/reports`).add({
         reporterId: userId,
         reporterUsername: userName,
         menfessUID: mmenfessUID,
