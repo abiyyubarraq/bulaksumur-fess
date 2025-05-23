@@ -22,7 +22,8 @@ export function initSendFeedbackHandlers(
     if (!userId) return;
 
     const state = userStates.get(userId);
-    if (state?.waitingForContent) {
+    if (state?.waitingForContent && ctx.session.route === "send_feedback") {
+      ctx.session.route = "idle";
       userStates.delete(userId);
 
       try {
@@ -41,6 +42,7 @@ export function initSendFeedbackHandlers(
               reply_markup: keyboard,
             }
           );
+          ctx.session.route = "send_feedback";
           userStates.set(userId, {
             waitingForContent: true,
             messageToDelete: sentMessage?.message_id,
@@ -105,7 +107,7 @@ export async function startSendFeedBackListener(
       reply_markup: keyboard,
     }
   )) as { message_id: number };
-
+  ctx.session.route = "send_feedback";
   userStates.set(userId, {
     waitingForContent: true,
     messageToDelete: sentMessage?.message_id,

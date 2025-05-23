@@ -1,7 +1,7 @@
 import type { ParseModeFlavor } from "@grammyjs/parse-mode";
 import { type Bot, InlineKeyboard } from "grammy";
 import { db } from "../utils/firebase";
-import { sanitizeMessage } from "../utils/helpers";
+import { checkValidMessage, sanitizeMessage } from "../utils/helpers";
 import type { BotContext } from "../utils/types";
 
 const usersInAnonMessageMode = new Map<
@@ -33,12 +33,11 @@ export function initViewUserProfile(
     const targetUserId = Number(ctx.match[2]);
     const targetUsername = ctx.match[3] || "";
 
-    if (ctx.from) {
-      userInReportingUserMode.set(ctx.from.id, {
-        targetUserId: targetUserId,
-        targetUsername: targetUsername,
-      });
-    }
+    ctx.session.route = "report_user";
+    userInReportingUserMode.set(ctx.from.id, {
+      targetUserId: targetUserId,
+      targetUsername: targetUsername,
+    });
 
     const cancelKeyboard = new InlineKeyboard().text(
       "✖️ Cancel",
@@ -58,14 +57,13 @@ export function initViewUserProfile(
     const targetUserId = Number(ctx.match[2]);
     const targetUsername = ctx.match[3] || "";
 
-    if (ctx.from) {
-      usersInAnonMessageMode.set(ctx.from.id, {
-        targetUserId: targetUserId,
-        targetUsername: targetUsername,
-      });
+    ctx.session.route = "anon_message_mode";
+    usersInAnonMessageMode.set(ctx.from.id, {
+      targetUserId: targetUserId,
+      targetUsername: targetUsername,
+    });
 
-      ctx.session.lastSentInteract = new Date();
-    }
+    ctx.session.lastSentInteract = new Date();
 
     const cancelKeyboard = new InlineKeyboard().text(
       "✖️ Cancel",
@@ -82,28 +80,25 @@ export function initViewUserProfile(
   });
 
   bot.callbackQuery("cancel_anon_message", async (ctx) => {
-    if (ctx.from) {
-      usersInAnonMessageMode.delete(ctx.from.id);
-    }
+    ctx.session.route = "idle";
+    usersInAnonMessageMode.delete(ctx.from.id);
 
     await ctx.editMessageText("Kamu membatalkan pengiriman pesan anonim.");
   });
 
   bot.callbackQuery("cancel_report_user", async (ctx) => {
-    if (ctx.from) {
-      userInReportingUserMode.delete(ctx.from.id);
-    }
+    ctx.session.route = "idle";
+    userInReportingUserMode.delete(ctx.from.id);
 
     await ctx.editMessageText("Kamu membatalkan mengirim laporan.");
   });
 
   bot.callbackQuery(
-    /^unsend_anon_message_to_(\d+)_(\d+)_(\d+)$/,
+    /^unsend_anon_message_to_(\w+)_(\d+)_(\d+)$/,
     async (ctx) => {
       const targetUsername = ctx.match[1];
       const targetUserId = Number(ctx.match[2]);
       const messageId = Number(ctx.match[3]);
-
       await ctx.api.deleteMessage(targetUserId, messageId);
 
       await ctx.editMessageText(
@@ -113,7 +108,11 @@ export function initViewUserProfile(
   );
 
   bot.on("message:text", async (ctx, next) => {
-    if (ctx.from && usersInAnonMessageMode.has(ctx.from.id)) {
+    if (
+      ctx.from &&
+      usersInAnonMessageMode.has(ctx.from.id) &&
+      ctx.session.route === "anon_message_mode"
+    ) {
       if (lastBotMessageId) {
         await ctx.api.deleteMessage(ctx.chat?.id || 0, lastBotMessageId);
       }
@@ -127,6 +126,15 @@ export function initViewUserProfile(
 
       if (!targetUserId || !targetUsername) {
         await ctx.reply("😔 User tidak ditemukan.");
+        ctx.session.route = "idle";
+        usersInAnonMessageMode.delete(ctx.from.id);
+        return;
+      }
+
+      if (!checkValidMessage(messageText)) {
+        await ctx.reply(
+          "😔 Pesan tidak valid, dilarang mengirim link atau username, dan hanya boleh mengirim text dengan character ASCII. Silahkan coba lagi."
+        );
         return;
       }
 
@@ -134,7 +142,8 @@ export function initViewUserProfile(
 
       const sentMessage = await ctx.api.sendMessage(
         targetUserId,
-        formattedMessage
+        formattedMessage,
+        { parse_mode: "HTML" }
       );
 
       const keyboard = new InlineKeyboard().text(
@@ -144,12 +153,17 @@ export function initViewUserProfile(
       await ctx.reply(
         `📤 Pesan anonim kamu telah berhasil dikirim ke @${targetUsername}!`,
         {
+          reply_to_message_id: ctx.message.message_id,
           reply_markup: keyboard,
         }
       );
-
+      ctx.session.route = "idle";
       usersInAnonMessageMode.delete(ctx.from.id);
-    } else if (ctx.from && userInReportingUserMode.has(ctx.from.id)) {
+    } else if (
+      ctx.from &&
+      userInReportingUserMode.has(ctx.from.id) &&
+      ctx.session.route === "report_user"
+    ) {
       if (lastBotMessageId) {
         await ctx.api.deleteMessage(ctx.chat?.id || 0, lastBotMessageId);
       }
@@ -162,6 +176,7 @@ export function initViewUserProfile(
       const messageText = ctx.message.text;
       if (!targetUserId || !targetUsername) {
         await ctx.reply("😔 User tidak ditemukan.");
+        ctx.session.route = "idle";
         return;
       }
 
@@ -180,6 +195,7 @@ export function initViewUserProfile(
         `🚨 Laporan terkait pengguna @${targetUsername} telah berhasil dikirim ke admin.`
       );
 
+      ctx.session.route = "idle";
       userInReportingUserMode.delete(ctx.from.id);
       return;
     }

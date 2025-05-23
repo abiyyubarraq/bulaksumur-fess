@@ -4,6 +4,7 @@ import { Bot, InlineKeyboard } from "grammy";
 import moment from "moment";
 import { postMenfessInteraction } from "../interactions";
 
+import { footer } from "../mainBot/commands/commandMenuContent";
 import { botConfig } from "../utils/config";
 import { db } from "../utils/firebase";
 import {
@@ -37,7 +38,8 @@ export function initPostHandlers(bot: Bot<ParseModeFlavor<BotContext>>): void {
       return;
     }
     const state = userStates.get(userId);
-    if (state?.waitingForContent) {
+    if (state?.waitingForContent && ctx.session.route === "post_menfess") {
+      ctx.session.route = "idle";
       userStates.delete(userId);
 
       try {
@@ -66,6 +68,7 @@ export function initPostHandlers(bot: Bot<ParseModeFlavor<BotContext>>): void {
           const sentMessage = await ctx.reply(waitingForMenfessMessage, {
             reply_markup: keyboard,
           });
+          ctx.session.route = "post_menfess";
           userStates.set(userId, {
             waitingForContent: true,
             messageToDelete: sentMessage?.message_id,
@@ -87,9 +90,7 @@ export function initPostHandlers(bot: Bot<ParseModeFlavor<BotContext>>): void {
             `✨ *Menfess kamu:* ✨\n\n❝${messageText}❞\n\n` +
             `📅 Pada hari ${getFormattedDate()} 📅\n\n` +
             "🔗 Kamu bisa melihat menfess kamu di link dibawah ini ⬇️\n\n" +
-            `📢 Channel Base: @${botConfig.channelId.replace("@", "")}\n` +
-            `👨‍💼 Admin Base: @${botConfig.adminBaseUserName}\n` +
-            `👮‍♂️ Moderator Base: @${botConfig.moderatorBaseUserName}\n`,
+            footer,
           {
             reply_markup: keyboard,
           }
@@ -240,7 +241,7 @@ export async function startPostMenfessListener(
   const sentMessage = (await ctx.editMessageText(waitingForMenfessMessage, {
     reply_markup: keyboard,
   })) as { message_id: number };
-
+  ctx.session.route = "post_menfess";
   userStates.set(userId, {
     waitingForContent: true,
     messageToDelete: sentMessage?.message_id,
@@ -265,7 +266,7 @@ export async function postToChannel(ctx: ParseModeFlavor<BotContext>) {
 
   const userName = ctx.from?.username;
   const menfessUID = generateUID(20);
-  const footer = `\n\n${ctx.session.gender === "M" ? "🕺 #M✘✘" : "💃 #F✘✘"} \n\n!$${menfessUID}`;
+  const menfessFooter = `\n\n${ctx.session.gender === "M" ? "🕺 #M✘✘" : "💃 #F✘✘"} \n\n!$${menfessUID}`;
 
   try {
     let sentMessage;
@@ -286,25 +287,28 @@ export async function postToChannel(ctx: ParseModeFlavor<BotContext>) {
       mediaId = lastPhoto.file_id;
       messageText = ctx.message.caption || "";
 
-      const caption = `${messageText}${footer}`;
+      const caption = `${messageText}${menfessFooter}`;
 
       sentMessage = await ctx.api.sendPhoto(
         botConfig.channelId,
         lastPhoto.file_id,
         {
           caption: caption,
+          parse_mode: "HTML",
         }
       );
     } else if (ctx.message.text) {
       messageText = ctx.message.text;
 
-      const caption = `${messageText}${footer}`;
+      const caption = `${messageText}${menfessFooter}`;
 
-      sentMessage = await ctx.api.sendMessage(botConfig.channelId, caption);
+      sentMessage = await ctx.api.sendMessage(botConfig.channelId, caption, {
+        parse_mode: "HTML",
+      });
     } else {
       await ctx.api.sendMessage(
         userId,
-        "Please send a text, or photo to post as a menfess."
+        `Menfess hanya bisa berupa text & photo yang terdapat keyword trigger ${botConfig.postTrigger} 😔.`
       );
     }
 

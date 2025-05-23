@@ -196,9 +196,33 @@ export function isValidMessage(message: string): boolean {
     return false;
   }
 
+  if (message.length > 888) {
+    return false;
+  }
+
+  if (!checkValidMessage(message)) {
+    return false;
+  }
+
+  return true;
+}
+
+export function checkValidMessage(message: string): boolean {
   // Check for ASCII characters only
   const asciiRegex = /^[\x20-\x7E\n]+$/;
   if (!asciiRegex.test(message)) {
+    return false;
+  }
+
+  // Check for URLs
+  const urlRegex = /(https?:\/\/[^\s]+)|(www\.[^\s]+)/gi;
+  if (urlRegex.test(message)) {
+    return false;
+  }
+
+  // Check for username mentions (@username)
+  const usernameRegex = /@\w+/g;
+  if (usernameRegex.test(message)) {
     return false;
   }
 

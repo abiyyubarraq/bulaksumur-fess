@@ -2,7 +2,7 @@ import type { ParseModeFlavor } from "@grammyjs/parse-mode";
 import { Bot, InlineKeyboard } from "grammy";
 import { botConfig } from "../utils/config";
 import { db } from "../utils/firebase";
-import { extractMenfessUID } from "../utils/helpers";
+import { checkValidMessage, extractMenfessUID } from "../utils/helpers";
 import type { BotContext, MenfessDbData } from "../utils/types";
 
 const userInAnonReplyMode = new Map<
@@ -204,7 +204,7 @@ export async function initPasteLinkHandler(
     );
 
     if (!ctx.from) return;
-
+    ctx.session.route = "anon_reply_mode";
     userInAnonReplyMode.set(ctx.from.id, {
       groupChatId: menfessDbData.groupChatId,
       senderInfo: ctx.session.gender === "M" ? "🕺 #M✘✘" : "💃 #F✘✘",
@@ -232,7 +232,7 @@ export async function initPasteLinkHandler(
     );
 
     if (!ctx.from) return;
-
+    ctx.session.route = "anon_reply_mode";
     userInAnonReplyMode.set(ctx.from.id, {
       groupChatId: Number(groupChatId),
       senderInfo: ctx.session.gender === "M" ? "🕺 #M✘✘" : "💃 #F✘✘",
@@ -246,7 +246,10 @@ export async function initPasteLinkHandler(
       return;
     }
 
-    if (userInAnonReplyMode.has(userId)) {
+    if (
+      userInAnonReplyMode.has(userId) &&
+      ctx.session.route === "anon_reply_mode"
+    ) {
       const { groupChatId, senderInfo, messageShoudlDeleted } =
         userInAnonReplyMode.get(userId) || {
           groupChatId: 0,
@@ -255,7 +258,12 @@ export async function initPasteLinkHandler(
         };
 
       const messageId = ctx.message?.message_id;
-
+      if (!checkValidMessage(ctx.message.text)) {
+        await ctx.reply(
+          "😔 Pesan tidak valid, dilarang mengirim link atau username, dan hanya boleh mengirim text dengan character ASCII. Silahkan coba lagi."
+        );
+        return;
+      }
       ctx.api.sendMessage(
         botConfig.groupChatId,
         `${ctx.message.text}\n\n${senderInfo}`,
@@ -267,7 +275,7 @@ export async function initPasteLinkHandler(
       if (messageShoudlDeleted) {
         await ctx.api.deleteMessage(ctx.chat.id, messageShoudlDeleted);
       }
-
+      ctx.session.route = "idle";
       userInAnonReplyMode.delete(userId);
 
       ctx.reply("👌 Reply anonim kamu berhasil dikirim", {

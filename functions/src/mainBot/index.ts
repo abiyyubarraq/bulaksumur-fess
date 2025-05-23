@@ -46,6 +46,7 @@ export function createBot(): Bot<ParseModeFlavor<BotContext>> {
       agreement1: null,
       agreement2: null,
       agreement3: null,
+      route: "idle",
     };
   }
   bot.use(session({ initial }));

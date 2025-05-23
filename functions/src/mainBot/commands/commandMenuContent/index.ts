@@ -8,7 +8,7 @@ import { db } from "../../../utils/firebase";
 import { getPremiumBadge } from "../../../utils/helpers";
 import type { BotContext, UserDbData } from "../../../utils/types";
 
-const footer =
+export const footer =
   `👪 Channel Base: @${botConfig.channelId.replace("@", "")}\n` +
   `👨‍💼 Admin Base: @${botConfig.adminBaseUserName}\n` +
   `👮‍♂️ Moderator Base: @${botConfig.moderatorBaseUserName}\n`;

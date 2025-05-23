@@ -73,6 +73,50 @@ export function initSessionModule(bot: Bot<ParseModeFlavor<BotContext>>): void {
       );
       return;
     }
+
+    if (!ctx.session.isRegistered || !ctx.session.lastUserUpdatedDataWithDb) {
+      const bannedUserDoc = await db
+        .collection("bannedUsers")
+        .doc(userId.toString())
+        .get();
+      if (bannedUserDoc.exists) {
+        ctx.session.isBanned = true;
+        ctx.session.isRegistered = false;
+        await ctx.answerCallbackQuery(
+          "❌ Maaf, kamu tidak diizinkan mengirim menfess. 🚫"
+        );
+        return;
+      }
+
+      const userDoc = await db.collection("users").doc(userId.toString()).get();
+      if (userDoc.exists) {
+        const userData = userDoc.data() as UserDbData;
+        if (
+          ["complete", "agreement1", "agreement2", "agreement3"].includes(
+            userData.registerStep
+          )
+        ) {
+          ctx.session.isRegistered = true;
+          ctx.session.registeredAt = userData.registeredAt.toDate();
+          ctx.session.emailRegistered = userData.emailRegistered;
+          ctx.session.gender = userData.gender;
+          ctx.session.birthMonth = userData.birthMonth;
+          ctx.session.birthYear = userData.birthYear;
+          ctx.session.anonName = userData.anonName;
+          ctx.session.faculty = userData.faculty;
+          ctx.session.univYear = userData.univYear;
+          ctx.session.bio = userData.bio;
+          ctx.session.registerStep = userData.registerStep;
+          ctx.session.userId = userId;
+          ctx.session.premiumStatus = userData.premiumStatus;
+          ctx.session.premiumUntil = userData.premiumUntil?.toDate() || null;
+          ctx.session.lastUserUpdatedDataWithDb = new Date();
+          await next();
+          return;
+        }
+      }
+    }
+
     if (ctx.session.registerStep !== "complete") {
       const callbackQueryAllowed = [
         "agreement_agree_",
@@ -115,10 +159,6 @@ export function initSessionModule(bot: Bot<ParseModeFlavor<BotContext>>): void {
     const userId = ctx.from?.id;
     if (!userId) return;
 
-    if (userId === botConfig.telegramAdminId) {
-      await next();
-      return;
-    }
     const username = ctx.from?.username;
     if (!username) {
       await ctx.reply(
@@ -197,11 +237,15 @@ export function initSessionModule(bot: Bot<ParseModeFlavor<BotContext>>): void {
           ctx.session.premiumStatus = userData.premiumStatus;
           ctx.session.premiumUntil = userData.premiumUntil?.toDate() || null;
           ctx.session.lastUserUpdatedDataWithDb = new Date();
-
           await next();
           return;
         }
       }
+    }
+
+    if (userId === botConfig.telegramAdminId) {
+      await next();
+      return;
     }
 
     const messageText = ctx.message?.text || "";
