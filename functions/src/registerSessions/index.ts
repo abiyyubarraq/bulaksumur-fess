@@ -109,6 +109,7 @@ export function initSessionModule(bot: Bot<BotContext>): void {
           ctx.session.premiumStatus = userData.premiumStatus;
           ctx.session.premiumUntil = userData.premiumUntil?.toDate() || null;
           ctx.session.lastUserUpdatedDataWithDb = new Date();
+
           await next();
           return;
         }
@@ -616,6 +617,9 @@ export function initSessionModule(bot: Bot<BotContext>): void {
           premiumStatus: ctx.session.premiumStatus,
           premiumUntil: ctx.session.premiumUntil,
           menfessCount: 0,
+          deletedCount: 0,
+          warnedCount: 0,
+          isBanned: false,
         });
         await ctx.reply(
           "🎉✨ Selamat! Pendaftaran kamu telah berhasil! 🎊🎈\n\n" +

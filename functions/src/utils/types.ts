@@ -73,6 +73,7 @@ export interface BotConfig {
 }
 
 export interface UserDbData {
+  isBanned: boolean;
   userId: number;
   username: string;
   emailRegistered: string;
@@ -107,6 +108,8 @@ export interface UserDbData {
   premiumStatus: 1 | 2 | 3 | null;
   premiumUntil: Timestamp | null;
   agreementSignAt: Timestamp | null;
+  deletedCount: number | null;
+  warnedCount: number | null;
 }
 
 export interface MenfessDbData {

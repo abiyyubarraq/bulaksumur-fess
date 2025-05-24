@@ -197,6 +197,9 @@ export async function sendViewProfileMenu(ctx: BotContext) {
 
   // Format profile display text with dividers for better readability
   let profileText = `<blockquote>${userDbData.bio}</blockquote>\n\n`;
+  if (userDbData.isBanned) {
+    profileText += `🚫 Waspada user ini telah dibanned! 🚫\n`;
+  }
   profileText += `👤 Name : ${userDbData.anonName}${getPremiumBadge(userDbData.premiumStatus)}\n`;
   profileText += `🧬 Sex : ${userDbData.gender === "M" ? "🕺 #M♂" : "💃 #F♀"}\n`;
   // profileText += `📍 Location : -\n`;
@@ -206,8 +209,8 @@ export async function sendViewProfileMenu(ctx: BotContext) {
   // profileText += `⚡ Score : ${(userDbData.menfessCount || 0) * 100}\n`;
 
   // Add warning/deleted info if available (placeholder for now)
-  // profileText += `❌ Deleted : 0x\n`;
-  // profileText += `⚠️ Warned : 0x\n\n`;
+  profileText += `❌ Deleted : ${userDbData.deletedCount || 0}\n`;
+  profileText += `⚠️ Warned : ${userDbData.warnedCount || 0}\n\n`;
 
   // Add user ID and join information
   profileText += `🆔 ID : ${userDbData.userId}\n`;
