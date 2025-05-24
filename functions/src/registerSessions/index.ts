@@ -38,34 +38,95 @@ const FACULTY_LIST = [
   "PASCA",
 ];
 
+const loadUserDataIntoSession = async (
+  ctx: BotContext,
+  userId: number,
+  username: string
+) => {
+  const userDoc = await db.collection("users").doc(userId.toString()).get();
+  if (userDoc.exists) {
+    const userData = userDoc.data() as UserDbData;
+    if (
+      ["complete", "agreement1", "agreement2", "agreement3"].includes(
+        userData.registerStep
+      )
+    ) {
+      if (username !== userData.username) {
+        await db.collection("users").doc(userId.toString()).update({
+          username: username,
+        });
+      }
+
+      ctx.session.isRegistered = true;
+      ctx.session.registeredAt = userData.registeredAt.toDate();
+      ctx.session.emailRegistered = userData.emailRegistered;
+      ctx.session.gender = userData.gender;
+      ctx.session.birthMonth = userData.birthMonth;
+      ctx.session.birthYear = userData.birthYear;
+      ctx.session.anonName = userData.anonName;
+      ctx.session.faculty = userData.faculty;
+      ctx.session.univYear = userData.univYear;
+      ctx.session.bio = userData.bio;
+      ctx.session.registerStep = userData.registerStep;
+      ctx.session.userId = userId;
+      ctx.session.premiumStatus = userData.premiumStatus;
+      ctx.session.premiumUntil = userData.premiumUntil?.toDate() || null;
+      ctx.session.lastUserUpdatedDataWithDb = new Date();
+      ctx.session.agreement1 = userData.agreement1 ?? false;
+      ctx.session.agreement2 = userData.agreement2 ?? false;
+      ctx.session.agreement3 = userData.agreement3 ?? false;
+      return true;
+    }
+  }
+  return false;
+};
+
+const checkUserBanned = async (ctx: BotContext, userId: number) => {
+  const bannedUserDoc = await db
+    .collection("bannedUsers")
+    .doc(userId.toString())
+    .get();
+
+  if (bannedUserDoc.exists) {
+    ctx.session.isBanned = true;
+    ctx.session.isRegistered = false;
+    return true;
+  }
+  return false;
+};
+
+const verifyChannelMembership = async (ctx: BotContext, userId: number) => {
+  const memberStatus = await ctx.api.getChatMember(botConfig.channelId, userId);
+
+  return !(
+    memberStatus.status === "left" ||
+    memberStatus.status === "kicked" ||
+    memberStatus.status === "restricted"
+  );
+};
+
 export function initSessionModule(bot: Bot<BotContext>): void {
   bot.on("callback_query:data", async (ctx, next) => {
     const userId = ctx.from?.id;
     if (!userId) return;
-    const username = ctx.from?.username;
 
+    const username = ctx.from?.username;
     if (!username) {
       await ctx.answerCallbackQuery(
         "⚠️ Username tidak ditemukan! 🔔 Silahkan buat username Telegram terlebih dahulu untuk menggunakan bot ini."
       );
       return;
-    } else if (ctx.session.isBanned) {
+    }
+
+    if (ctx.session.isBanned) {
       await ctx.answerCallbackQuery(
-        "❌ Maaf, kamu tidak diizinkan mengirim menfess. 🚫"
+        "❌ Maaf, kamu tidak diizinkan berinteraksi dengan bot ini 🚫"
       );
       return;
     }
 
-    const memberStatus = await ctx.api.getChatMember(
-      botConfig.channelId,
-      userId
-    );
-
-    if (
-      memberStatus.status === "left" ||
-      memberStatus.status === "kicked" ||
-      memberStatus.status === "restricted"
-    ) {
+    if (!(await verifyChannelMembership(ctx, userId))) {
+      ctx.session.isRegistered = false;
       await ctx.answerCallbackQuery(
         `⚠️ Maaf, kamu belum join ke channel 🔔 Silahkan join ke channel ${botConfig.channelId} terlebih dahulu.`
       );
@@ -73,54 +134,22 @@ export function initSessionModule(bot: Bot<BotContext>): void {
     }
 
     if (!ctx.session.isRegistered || !ctx.session.lastUserUpdatedDataWithDb) {
-      const bannedUserDoc = await db
-        .collection("bannedUsers")
-        .doc(userId.toString())
-        .get();
-      if (bannedUserDoc.exists) {
-        ctx.session.isBanned = true;
-        ctx.session.isRegistered = false;
+      if (await checkUserBanned(ctx, userId)) {
         await ctx.answerCallbackQuery(
-          "❌ Maaf, kamu tidak diizinkan mengirim menfess. 🚫"
+          "❌ Maaf, kamu tidak diizinkan berinteraksi dengan bot ini. 🚫"
         );
         return;
       }
 
-      const userDoc = await db.collection("users").doc(userId.toString()).get();
-      if (userDoc.exists) {
-        const userData = userDoc.data() as UserDbData;
-        if (
-          ["complete", "agreement1", "agreement2", "agreement3"].includes(
-            userData.registerStep
-          )
-        ) {
-          if (username !== userData.username) {
-            await db.collection("users").doc(userId.toString()).update({
-              username: username,
-            });
-          }
-          ctx.session.isRegistered = true;
-          ctx.session.registeredAt = userData.registeredAt.toDate();
-          ctx.session.emailRegistered = userData.emailRegistered;
-          ctx.session.gender = userData.gender;
-          ctx.session.birthMonth = userData.birthMonth;
-          ctx.session.birthYear = userData.birthYear;
-          ctx.session.anonName = userData.anonName;
-          ctx.session.faculty = userData.faculty;
-          ctx.session.univYear = userData.univYear;
-          ctx.session.bio = userData.bio;
-          ctx.session.registerStep = userData.registerStep;
-          ctx.session.userId = userId;
-          ctx.session.premiumStatus = userData.premiumStatus;
-          ctx.session.premiumUntil = userData.premiumUntil?.toDate() || null;
-          ctx.session.lastUserUpdatedDataWithDb = new Date();
-          ctx.session.agreement1 = userData.agreement1 ?? false;
-          ctx.session.agreement2 = userData.agreement2 ?? false;
-          ctx.session.agreement3 = userData.agreement3 ?? false;
-          await next();
-          return;
-        }
+      if (await loadUserDataIntoSession(ctx, userId, username)) {
+        await next();
+        return;
       }
+    }
+
+    if (userId === botConfig.telegramAdminId) {
+      await next();
+      return;
     }
 
     if (ctx.session.registerStep !== "complete") {
@@ -138,6 +167,7 @@ export function initSessionModule(bot: Bot<BotContext>): void {
       const isAllowed = callbackQueryAllowed.some((allowed) =>
         ctx.callbackQuery.data.startsWith(allowed)
       );
+
       if (isAllowed) {
         await next();
         return;
@@ -147,10 +177,9 @@ export function initSessionModule(bot: Bot<BotContext>): void {
         "⚠️ Maaf, kamu belum melakukan pendaftaran atau belum menyetujui peraturan dan ketentuan base yang berlaku."
       );
       return;
-    } else {
-      await next();
-      return;
     }
+
+    await next();
   });
 
   bot.on("message", async (ctx, next) => {
@@ -186,74 +215,32 @@ export function initSessionModule(bot: Bot<BotContext>): void {
       return;
     }
 
-    const memberStatus = await ctx.api.getChatMember(
-      botConfig.channelId,
-      userId
-    );
-
-    if (
-      memberStatus.status === "left" ||
-      memberStatus.status === "kicked" ||
-      memberStatus.status === "restricted"
-    ) {
+    if (!(await verifyChannelMembership(ctx, userId))) {
       ctx.session.isRegistered = false;
+
       await ctx.reply(
         `⚠️ Maaf, kamu belum join ke channel\n\n🔔 Silahkan join ke channel ${botConfig.channelId} terlebih dahulu.`
       );
       return;
     }
 
-    if (ctx.session.isRegistered || ctx.session.registerStep === "complete") {
+    if (
+      (ctx.session.isRegistered || ctx.session.registerStep === "complete") &&
+      ctx.session.lastUserUpdatedDataWithDb
+    ) {
       await next();
       return;
     }
 
     if (!ctx.session.isRegistered || !ctx.session.lastUserUpdatedDataWithDb) {
-      const bannedUserDoc = await db
-        .collection("bannedUsers")
-        .doc(userId.toString())
-        .get();
-      if (bannedUserDoc.exists) {
-        ctx.session.isBanned = true;
-        ctx.session.isRegistered = false;
+      if (await checkUserBanned(ctx, userId)) {
         await ctx.reply("❌ Maaf, kamu tidak diizinkan mengirim menfess. 🚫");
         return;
       }
 
-      const userDoc = await db.collection("users").doc(userId.toString()).get();
-      if (userDoc.exists) {
-        const userData = userDoc.data() as UserDbData;
-        if (
-          ["complete", "agreement1", "agreement2", "agreement3"].includes(
-            userData.registerStep
-          )
-        ) {
-          if (username !== userData.username) {
-            await db.collection("users").doc(userId.toString()).update({
-              username: username,
-            });
-          }
-          ctx.session.isRegistered = true;
-          ctx.session.registeredAt = userData.registeredAt.toDate();
-          ctx.session.emailRegistered = userData.emailRegistered;
-          ctx.session.gender = userData.gender;
-          ctx.session.birthMonth = userData.birthMonth;
-          ctx.session.birthYear = userData.birthYear;
-          ctx.session.anonName = userData.anonName;
-          ctx.session.faculty = userData.faculty;
-          ctx.session.univYear = userData.univYear;
-          ctx.session.bio = userData.bio;
-          ctx.session.registerStep = userData.registerStep;
-          ctx.session.userId = userId;
-          ctx.session.premiumStatus = userData.premiumStatus;
-          ctx.session.premiumUntil = userData.premiumUntil?.toDate() || null;
-          ctx.session.lastUserUpdatedDataWithDb = new Date();
-          ctx.session.agreement1 = userData.agreement1 ?? false;
-          ctx.session.agreement2 = userData.agreement2 ?? false;
-          ctx.session.agreement3 = userData.agreement3 ?? false;
-          await next();
-          return;
-        }
+      if (await loadUserDataIntoSession(ctx, userId, username)) {
+        await next();
+        return;
       }
     }
 

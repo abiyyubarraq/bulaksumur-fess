@@ -155,9 +155,9 @@ export function initPostHandlers(bot: Bot<BotContext>): void {
       "id"
     );
 
-    if (moment().isBefore(sentDate.clone().add(30, "seconds"))) {
+    if (moment().isBefore(sentDate.clone().add(50, "seconds"))) {
       const secondsLeft = moment
-        .duration(sentDate.clone().add(30, "seconds").diff(moment()))
+        .duration(sentDate.clone().add(50, "seconds").diff(moment()))
         .asSeconds()
         .toFixed(0);
       await ctx.answerCallbackQuery({
