@@ -244,7 +244,7 @@ export async function initPasteLinkHandler(bot: Bot<BotContext>) {
     });
   });
 
-  bot.callbackQuery("cancel_anon_message", async (ctx) => {
+  bot.callbackQuery("cancel_anon_reply", async (ctx) => {
     ctx.session.route = "idle";
     userInAnonReplyMode.delete(ctx.from.id);
 
