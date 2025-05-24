@@ -208,7 +208,7 @@ export function initViewUserProfile(bot: Bot<BotContext>): void {
 
       await db.collection(`users/${targetUserId}/reports`).add({
         reporterId: ctx.from.id,
-        reporterUsername: ctx.from.username,
+        reporterUsername: ctx.from.username?.toLowerCase() || "",
         reportText: sanitizeMessage(messageText),
         userId: targetUserId,
         userName: targetUsername,

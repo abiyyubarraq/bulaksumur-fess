@@ -165,7 +165,7 @@ export function initInteractionHandlers(bot: Bot<BotContext>): void {
     } else if (action === "report") {
       await db.collection(`users/${menfessDbData.senderId}/reports`).add({
         reporterId: userId,
-        reporterUsername: userName,
+        reporterUsername: userName?.toLowerCase() || "",
         menfessUID: mmenfessUID,
         menfessText: menfessOnGroupText?.slice(0, -24),
         userId: menfessDbData.senderId,
