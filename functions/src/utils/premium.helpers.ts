@@ -11,8 +11,8 @@ export function getPremiumBadge(premiumStatus: number | null): string {
 }
 
 export function getMenfessMaxInteract(premiumStatus: number | null): number {
-  if (premiumStatus === 1) return 7;
-  if (premiumStatus === 2) return 18;
-  if (premiumStatus === 3) return 30;
+  if (premiumStatus === 1) return 10;
+  if (premiumStatus === 2) return 23;
+  if (premiumStatus === 3) return 90;
   return 2;
 }
