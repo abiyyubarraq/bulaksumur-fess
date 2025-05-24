@@ -1,4 +1,3 @@
-import type { ParseModeFlavor } from "@grammyjs/parse-mode";
 import { Bot, InlineKeyboard } from "grammy";
 import { botConfig } from "../utils/config";
 import { db } from "../utils/firebase";
@@ -63,11 +62,8 @@ export const AGREEMENTS: AgreementMap = {
   },
 };
 
-export function initTosMenu(bot: Bot<ParseModeFlavor<BotContext>>): void {
-  async function sendAgreement(
-    ctx: ParseModeFlavor<BotContext>,
-    agreementNumber: number
-  ) {
+export function initTosMenu(bot: Bot<BotContext>): void {
+  async function sendAgreement(ctx: BotContext, agreementNumber: number) {
     try {
       const agreement = AGREEMENTS[agreementNumber as 1 | 2 | 3];
       if (!agreement) return;

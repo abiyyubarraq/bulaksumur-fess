@@ -1,4 +1,3 @@
-import type { ParseModeFlavor } from "@grammyjs/parse-mode";
 import { type Bot, InlineKeyboard } from "grammy";
 import { db } from "../utils/firebase";
 import { checkValidMessage, sanitizeMessage } from "../utils/helpers";
@@ -14,9 +13,7 @@ const userInReportingUserMode = new Map<
 >();
 let lastBotMessageId: number | null = null;
 
-export function initViewUserProfile(
-  bot: Bot<ParseModeFlavor<BotContext>>
-): void {
+export function initViewUserProfile(bot: Bot<BotContext>): void {
   // bot.callbackQuery(/^user_(\d+)_block_(\d+)$/, async (ctx) => {
   //   const targetUserId = ctx.match[1];
   //   await ctx.answerCallbackQuery({

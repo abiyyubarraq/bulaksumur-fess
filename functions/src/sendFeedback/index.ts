@@ -1,4 +1,3 @@
-import type { ParseModeFlavor } from "@grammyjs/parse-mode";
 import { Bot, InlineKeyboard } from "grammy";
 import moment from "moment";
 import { db } from "../utils/firebase";
@@ -14,9 +13,7 @@ const waitingForFeedbackMessage = (feedBackType: string) =>
   `\n\n` +
   `Gunakan bahasa yang sopan ky kmu ngchat admin fakultas y 😊`;
 
-export function initSendFeedbackHandlers(
-  bot: Bot<ParseModeFlavor<BotContext>>
-): void {
+export function initSendFeedbackHandlers(bot: Bot<BotContext>): void {
   bot.on("message:text", async (ctx, next) => {
     const userId = ctx.from?.id;
     if (!userId) return;
@@ -82,7 +79,7 @@ export function initSendFeedbackHandlers(
 }
 
 export async function startSendFeedBackListener(
-  ctx: ParseModeFlavor<BotContext>,
+  ctx: BotContext,
   feedBackType: ListenFeedbackState["feedBackType"]
 ) {
   if (

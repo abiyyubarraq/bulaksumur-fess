@@ -1,4 +1,3 @@
-import type { ParseModeFlavor } from "@grammyjs/parse-mode";
 import { InlineKeyboard } from "grammy";
 import moment from "moment";
 import { AGREEMENTS, agreementFooter } from "../../../tosMenu";
@@ -13,7 +12,7 @@ export const footer =
   `👨‍💼 Admin Base: @${botConfig.adminBaseUserName}\n` +
   `👮‍♂️ Moderator Base: @${botConfig.moderatorBaseUserName}\n`;
 
-const myData = (ctx: ParseModeFlavor<BotContext>, userId: number) => {
+const myData = (ctx: BotContext, userId: number) => {
   const bio = ctx.session.bio || "";
   const userName = ctx.from?.username || "-";
   const birthMonth =
@@ -47,7 +46,7 @@ const myData = (ctx: ParseModeFlavor<BotContext>, userId: number) => {
   );
 };
 
-export async function sendMainMenu(ctx: ParseModeFlavor<BotContext>) {
+export async function sendMainMenu(ctx: BotContext) {
   const userId = ctx.from?.id;
   if (!userId) return;
 
@@ -75,7 +74,7 @@ export async function sendMainMenu(ctx: ParseModeFlavor<BotContext>) {
   });
 }
 
-export const viewMyProfileMenu = async (ctx: ParseModeFlavor<BotContext>) => {
+export const viewMyProfileMenu = async (ctx: BotContext) => {
   const userId = ctx.from?.id;
   if (!userId) return;
 
@@ -90,7 +89,7 @@ export const viewMyProfileMenu = async (ctx: ParseModeFlavor<BotContext>) => {
   });
 };
 
-export async function sendRulesMenu(ctx: ParseModeFlavor<BotContext>) {
+export async function sendRulesMenu(ctx: BotContext) {
   await ctx.reply(AGREEMENTS[1].content + agreementFooter, {
     parse_mode: "HTML",
   });
@@ -101,7 +100,7 @@ export async function sendRulesMenu(ctx: ParseModeFlavor<BotContext>) {
     parse_mode: "HTML",
   });
 }
-export async function sendHelpMenu(ctx: ParseModeFlavor<BotContext>) {
+export async function sendHelpMenu(ctx: BotContext) {
   await ctx.reply(
     "Bulaksumur Menfess Bot Commands:\n\n" +
       "/menu - Get the main menu\n" +
@@ -110,7 +109,7 @@ export async function sendHelpMenu(ctx: ParseModeFlavor<BotContext>) {
   );
 }
 
-export async function sendStartPostMenu(ctx: ParseModeFlavor<BotContext>) {
+export async function sendStartPostMenu(ctx: BotContext) {
   const keyboard = new InlineKeyboard();
   keyboard
     .text("Menfess 🔮", "post_menfess")
@@ -123,7 +122,7 @@ export async function sendStartPostMenu(ctx: ParseModeFlavor<BotContext>) {
   });
 }
 
-export async function sendReportFeedbackMenu(ctx: ParseModeFlavor<BotContext>) {
+export async function sendReportFeedbackMenu(ctx: BotContext) {
   const keyboard = new InlineKeyboard();
   keyboard
     .text("Kritik 💭", "send_kritik")
@@ -137,9 +136,7 @@ export async function sendReportFeedbackMenu(ctx: ParseModeFlavor<BotContext>) {
   });
 }
 
-export async function sendSendAnonMessageMenu(
-  ctx: ParseModeFlavor<BotContext>
-) {
+export async function sendSendAnonMessageMenu(ctx: BotContext) {
   const keyboard = new InlineKeyboard();
   keyboard.text("« BACK", "back_to_main_menu");
 
@@ -152,7 +149,7 @@ export async function sendSendAnonMessageMenu(
   );
 }
 
-export async function sendViewProfileMenu(ctx: ParseModeFlavor<BotContext>) {
+export async function sendViewProfileMenu(ctx: BotContext) {
   const userId = ctx.from?.id;
   if (!userId) {
     await ctx.reply("😔 User tidak ditemukan.");

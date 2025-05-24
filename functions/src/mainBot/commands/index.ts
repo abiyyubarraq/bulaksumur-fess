@@ -1,4 +1,3 @@
-import type { ParseModeFlavor } from "@grammyjs/parse-mode";
 import { Bot } from "grammy";
 import {
   sendPasteChannelCommentLinkMenu,
@@ -20,7 +19,7 @@ import {
   viewMyProfileMenu,
 } from "./commandMenuContent";
 
-export function initCommands(bot: Bot<ParseModeFlavor<BotContext>>): void {
+export function initCommands(bot: Bot<BotContext>): void {
   bot.hears(/^@.+/, async (ctx) => {
     await sendViewProfileMenu(ctx);
   });

@@ -1,7 +1,5 @@
 import { Bot, InlineKeyboard } from "grammy";
 
-import type { ParseModeFlavor } from "@grammyjs/parse-mode";
-
 import moment from "moment";
 import { botConfig } from "../utils/config";
 import { MONTH_NAMES } from "../utils/constants";
@@ -40,7 +38,7 @@ const FACULTY_LIST = [
   "PASCA",
 ];
 
-export function initSessionModule(bot: Bot<ParseModeFlavor<BotContext>>): void {
+export function initSessionModule(bot: Bot<BotContext>): void {
   bot.on("callback_query:data", async (ctx, next) => {
     const userId = ctx.from?.id;
     if (!userId) return;
@@ -965,7 +963,7 @@ export function initSessionModule(bot: Bot<ParseModeFlavor<BotContext>>): void {
 }
 
 function getProgressMessage(
-  ctx: ParseModeFlavor<BotContext>,
+  ctx: BotContext,
   stage:
     | "anonName"
     | "birthMonth"

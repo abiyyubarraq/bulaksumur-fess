@@ -1,4 +1,3 @@
-import type { ParseModeFlavor } from "@grammyjs/parse-mode";
 import { Bot, InlineKeyboard } from "grammy";
 import { botConfig } from "../utils/config";
 import { db } from "../utils/firebase";
@@ -15,7 +14,7 @@ const userInAnonReplyMode = new Map<
 >();
 
 const validateIds = (
-  ctx: ParseModeFlavor<BotContext>,
+  ctx: BotContext,
   chatId: string | undefined,
   errorMessage: string
 ): {
@@ -38,7 +37,7 @@ const validateIds = (
 };
 
 const sendReplyWithKeyboard = async (
-  ctx: ParseModeFlavor<BotContext>,
+  ctx: BotContext,
   userId: number,
   sourceId: string,
   targetId: number,
@@ -63,9 +62,7 @@ const sendReplyWithKeyboard = async (
   );
 };
 
-export async function sendPasteChannelLinkMenu(
-  ctx: ParseModeFlavor<BotContext>
-) {
+export async function sendPasteChannelLinkMenu(ctx: BotContext) {
   const channelChatId = ctx.update.message?.text?.split("/")[4];
   const { isValid, userId, messageId } = validateIds(
     ctx,
@@ -86,7 +83,7 @@ export async function sendPasteChannelLinkMenu(
   );
 }
 
-export async function sendPasteGroupLinkMenu(ctx: ParseModeFlavor<BotContext>) {
+export async function sendPasteGroupLinkMenu(ctx: BotContext) {
   const groupChatId = ctx.update.message?.text?.split("/")[4];
   const { isValid, userId, messageId } = validateIds(
     ctx,
@@ -107,9 +104,7 @@ export async function sendPasteGroupLinkMenu(ctx: ParseModeFlavor<BotContext>) {
   );
 }
 
-export async function sendPasteChannelCommentLinkMenu(
-  ctx: ParseModeFlavor<BotContext>
-) {
+export async function sendPasteChannelCommentLinkMenu(ctx: BotContext) {
   const userId = ctx.from?.id;
   if (!userId) return;
 
@@ -140,7 +135,7 @@ export async function sendPasteChannelCommentLinkMenu(
 }
 
 const handleValidationErrors = async (
-  ctx: ParseModeFlavor<BotContext>,
+  ctx: BotContext,
   userId: number | undefined,
   chatId: string | undefined,
   isValidChatId: boolean
@@ -163,9 +158,7 @@ const handleValidationErrors = async (
   return true;
 };
 
-export async function initPasteLinkHandler(
-  bot: Bot<ParseModeFlavor<BotContext>>
-) {
+export async function initPasteLinkHandler(bot: Bot<BotContext>) {
   bot.callbackQuery(/^send_anon_reply_to_channel_(\d+)$/, async (ctx) => {
     const menfessText = ctx.update.callback_query?.message?.text;
     const channelChatId = ctx.match[1];

@@ -1,10 +1,8 @@
+import { apiThrottler } from "@grammyjs/transformer-throttler";
 import { Bot, session } from "grammy";
 import { initInteractionHandlers } from "../interactions";
-import { initPostHandlers } from "../postMenfess";
-
-import { type ParseModeFlavor, hydrateReply } from "@grammyjs/parse-mode";
-import { apiThrottler } from "@grammyjs/transformer-throttler";
 import { initPasteLinkHandler } from "../pasteLinkHandler";
+import { initPostHandlers } from "../postMenfess";
 import { initSessionModule } from "../registerSessions";
 import { initSendFeedbackHandlers } from "../sendFeedback";
 import { initTosMenu } from "../tosMenu";
@@ -13,15 +11,15 @@ import type { BotContext, SessionData } from "../utils/types";
 import { initViewUserProfile } from "../view-user-profile";
 import { initCommands } from "./commands/index";
 
-export function startBot(bot: Bot<ParseModeFlavor<BotContext>>): void {
+export function startBot(bot: Bot<BotContext>): void {
   bot.start({
     drop_pending_updates: true,
     allowed_updates: ["message", "callback_query"],
   });
 }
 
-export function createBot(): Bot<ParseModeFlavor<BotContext>> {
-  const bot = new Bot<ParseModeFlavor<BotContext>>(botConfig.botToken);
+export function createBot(): Bot<BotContext> {
+  const bot = new Bot<BotContext>(botConfig.botToken);
   function initial(): SessionData {
     return {
       isRegistered: false,
@@ -50,7 +48,6 @@ export function createBot(): Bot<ParseModeFlavor<BotContext>> {
     };
   }
   bot.use(session({ initial }));
-  bot.use(hydrateReply);
   bot.api.config.use(apiThrottler());
 
   bot.api.setMyCommands([

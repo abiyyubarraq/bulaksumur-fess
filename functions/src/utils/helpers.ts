@@ -1,4 +1,3 @@
-import type { ParseModeFlavor } from "@grammyjs/parse-mode";
 import { nanoid } from "nanoid";
 import { botConfig } from "./config";
 import type { BotContext } from "./types";
@@ -244,9 +243,7 @@ export function sanitizeMessage(message: string): string {
   return sanitized;
 }
 
-export function isForwardedMenfessFromChannelToGroup(
-  ctx: ParseModeFlavor<BotContext>
-): boolean {
+export function isForwardedMenfessFromChannelToGroup(ctx: BotContext): boolean {
   return Boolean(
     ctx.senderChat?.id === botConfig.channelGroupChatIdNumber &&
       ctx.chat?.id === botConfig.groupChatIdNumber &&
@@ -255,9 +252,7 @@ export function isForwardedMenfessFromChannelToGroup(
   );
 }
 
-export function isChatFromUserToGroup(
-  ctx: ParseModeFlavor<BotContext>
-): boolean {
+export function isChatFromUserToGroup(ctx: BotContext): boolean {
   return Boolean(
     ctx.update?.message?.chat?.id &&
       ctx.update?.message?.chat?.id === Number(botConfig.groupChatIdNumber)

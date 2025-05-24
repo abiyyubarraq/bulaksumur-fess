@@ -1,4 +1,3 @@
-import type { ParseModeFlavor } from "@grammyjs/parse-mode";
 import { FieldValue } from "firebase-admin/firestore";
 import { Bot, InlineKeyboard } from "grammy";
 import moment from "moment";
@@ -8,8 +7,8 @@ import { extractMenfessUID } from "../utils/helpers";
 import type { BotContext, MenfessDbData } from "../utils/types";
 
 export async function postMenfessInteraction(
-  ctx: ParseModeFlavor<BotContext>,
-  bot: Bot<ParseModeFlavor<BotContext>>
+  ctx: BotContext,
+  bot: Bot<BotContext>
 ) {
   const keyboard = new InlineKeyboard()
     .text("👊 Hit Me!", "hitme")
@@ -43,9 +42,7 @@ export async function postMenfessInteraction(
   }
 }
 
-export function initInteractionHandlers(
-  bot: Bot<ParseModeFlavor<BotContext>>
-): void {
+export function initInteractionHandlers(bot: Bot<BotContext>): void {
   bot.callbackQuery(["hitme", "who", "talk", "report"], async (ctx) => {
     const action = ctx.callbackQuery.data;
     const userId = ctx.from?.id;
@@ -130,7 +127,9 @@ export function initInteractionHandlers(
           `💝 Cek profilnya di bawah ini! 👇`,
         { reply_markup: keyboard }
       );
-      await ctx.answerCallbackQuery("❤️ Your request sent to user");
+      await ctx.answerCallbackQuery(
+        "Request kamu telah disampaikan ke sender 💖"
+      );
     } else if (action === "who") {
       const keyboard = new InlineKeyboard()
         .text(
@@ -152,19 +151,23 @@ export function initInteractionHandlers(
           `💫 Apakah kamu ingin memberi tahu identitasmu? 👀`,
         { reply_markup: keyboard }
       );
-      await ctx.answerCallbackQuery("❤️ Your request sent to user");
+      await ctx.answerCallbackQuery(
+        "Request kamu telah disampaikan ke sender 💖"
+      );
     } else if (action === "talk") {
       await ctx.api.sendMessage(
         menfessDbData.senderId,
         `Someone wants to talk about this menfess! 💬\n\nYour post: ${menfessOnGroupText}`
       );
-      await ctx.answerCallbackQuery("❤️ Your request sent to user");
+      await ctx.answerCallbackQuery(
+        "Request kamu telah disampaikan ke sender 💖"
+      );
     } else if (action === "report") {
       await db.collection(`users/${menfessDbData.senderId}/reports`).add({
         reporterId: userId,
         reporterUsername: userName,
         menfessUID: mmenfessUID,
-        menfessText: menfessOnGroupText,
+        menfessText: menfessOnGroupText?.slice(0, -24),
         userId: menfessDbData.senderId,
         userName: menfessDbData.senderUserName,
         menfessChannelChatId: menfessDbData.channelChatId,
@@ -192,10 +195,7 @@ export function initInteractionHandlers(
     ctx.session.lastSentInteract = new Date();
   });
 
-  const handleInteractionResponse = async (
-    ctx: ParseModeFlavor<BotContext>,
-    type: string
-  ) => {
+  const handleInteractionResponse = async (ctx: BotContext, type: string) => {
     const senderMenfessId = ctx.from?.id;
     const senderMenfessUsername = ctx.from?.username;
     const interactReqData = ctx.callbackQuery?.data?.match(
@@ -233,21 +233,47 @@ export function initInteractionHandlers(
 
     const messages = {
       chat_me:
-        "User dari menfess yang kamu hit ingin berbicara dengan kamu! ❤️\n\n",
+        "User dari menfess yang kamu hit ingin berbicara dengan kamu! 💘\n",
       spill_me:
-        "User dari menfess yang kamu hit setuju untuk ngespill profilenya ke kamu! 🫗\n\n",
+        "User dari menfess yang kamu hit setuju untuk ngespill profilenya ke kamu! 🫗\n",
     };
 
     await ctx.api.sendMessage(
       userInteractId,
       messages[type as keyof typeof messages] +
-        `Silahkan klik tombol dibawah untuk langsung ke profile sender!`,
+        `Silahkan klik tombol dibawah untuk langsung ke profile sender! 💫`,
       { reply_markup: keyboard }
     );
+    const textMessage = ctx.update.callback_query?.message?.text;
+    const messageKeyboard =
+      ctx.update.callback_query?.message?.reply_markup?.inline_keyboard;
+    const editedMessage = `${textMessage}\n\n <u>Kamu memilih "${type === "chat_me" ? "🥂 Chat Me!" : "🫗 Spill Me!"}", jawaban kamu sudah dikirim ke user yang tertarik dengan menfess kamu!</u> 📤`;
 
-    await ctx.editMessageText(
-      `Jawaban kamu sudah dikirim ke user yang tertarik dengan menfess kamu! 📤`
-    );
+    if (type === "chat_me") {
+      const userUrl = (messageKeyboard?.[0]?.[1] as { url: string }).url;
+      const menfessUrl = (messageKeyboard?.[1]?.[0] as { url: string }).url;
+
+      const keyboardMarkupChatMe = new InlineKeyboard()
+        .url("👤 Sender", userUrl)
+        .url("🔗 Menfess", menfessUrl)
+        .row();
+
+      await ctx.editMessageText(editedMessage, {
+        parse_mode: "HTML",
+        reply_markup: keyboardMarkupChatMe,
+      });
+    } else if (type === "spill_me") {
+      const menfessUrl = (messageKeyboard?.[0]?.[1] as { url: string }).url;
+
+      const keyboardMarkupSpillMe = new InlineKeyboard()
+        .url("🔗 Menfess", menfessUrl)
+        .row();
+
+      await ctx.editMessageText(editedMessage, {
+        parse_mode: "HTML",
+        reply_markup: keyboardMarkupSpillMe,
+      });
+    }
   };
 
   bot.callbackQuery(/^response_interact_chat_me_(.+)$/, async (ctx) => {
