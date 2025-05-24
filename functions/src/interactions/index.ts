@@ -169,7 +169,7 @@ export function initInteractionHandlers(bot: Bot<BotContext>): void {
         menfessUID: mmenfessUID,
         menfessText: menfessOnGroupText?.slice(0, -24),
         userId: menfessDbData.senderId,
-        userName: menfessDbData.senderUserName,
+        userName: menfessDbData.senderUserName.toLowerCase(),
         menfessChannelChatId: menfessDbData.channelChatId,
         menfessGroupChatId: menfessDbData.groupChatId,
         createdAt: new Date(),

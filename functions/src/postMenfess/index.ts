@@ -314,15 +314,18 @@ export async function postToChannel(ctx: BotContext) {
     );
 
     try {
-      await db.collection("menfess").doc(menfessUID).set({
-        channelChatId: sentMessage?.message_id,
-        menfessUID: menfessUID,
-        senderId: userId,
-        senderUserName: userName,
-        createdAt: new Date(),
-        interactUsers: [],
-        senderAlias: ctx.session.anonName,
-      });
+      await db
+        .collection("menfess")
+        .doc(menfessUID)
+        .set({
+          channelChatId: sentMessage?.message_id,
+          menfessUID: menfessUID,
+          senderId: userId,
+          senderUserName: userName?.toLowerCase() || "",
+          createdAt: new Date(),
+          interactUsers: [],
+          senderAlias: ctx.session.anonName,
+        });
       await db
         .collection("users")
         .doc(userId.toString())

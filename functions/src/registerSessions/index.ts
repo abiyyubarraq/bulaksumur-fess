@@ -94,6 +94,11 @@ export function initSessionModule(bot: Bot<BotContext>): void {
             userData.registerStep
           )
         ) {
+          if (username !== userData.username) {
+            await db.collection("users").doc(userId.toString()).update({
+              username: username,
+            });
+          }
           ctx.session.isRegistered = true;
           ctx.session.registeredAt = userData.registeredAt.toDate();
           ctx.session.emailRegistered = userData.emailRegistered;
@@ -109,7 +114,9 @@ export function initSessionModule(bot: Bot<BotContext>): void {
           ctx.session.premiumStatus = userData.premiumStatus;
           ctx.session.premiumUntil = userData.premiumUntil?.toDate() || null;
           ctx.session.lastUserUpdatedDataWithDb = new Date();
-
+          ctx.session.agreement1 = userData.agreement1 ?? false;
+          ctx.session.agreement2 = userData.agreement2 ?? false;
+          ctx.session.agreement3 = userData.agreement3 ?? false;
           await next();
           return;
         }
@@ -221,6 +228,11 @@ export function initSessionModule(bot: Bot<BotContext>): void {
             userData.registerStep
           )
         ) {
+          if (username !== userData.username) {
+            await db.collection("users").doc(userId.toString()).update({
+              username: username,
+            });
+          }
           ctx.session.isRegistered = true;
           ctx.session.registeredAt = userData.registeredAt.toDate();
           ctx.session.emailRegistered = userData.emailRegistered;
@@ -236,6 +248,9 @@ export function initSessionModule(bot: Bot<BotContext>): void {
           ctx.session.premiumStatus = userData.premiumStatus;
           ctx.session.premiumUntil = userData.premiumUntil?.toDate() || null;
           ctx.session.lastUserUpdatedDataWithDb = new Date();
+          ctx.session.agreement1 = userData.agreement1 ?? false;
+          ctx.session.agreement2 = userData.agreement2 ?? false;
+          ctx.session.agreement3 = userData.agreement3 ?? false;
           await next();
           return;
         }
