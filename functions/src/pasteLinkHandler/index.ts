@@ -113,7 +113,8 @@ export async function sendPasteChannelCommentLinkMenu(ctx: BotContext) {
   const userId = ctx.from?.id;
   if (!userId) return;
 
-  const messageText = ctx.update.message?.text || "";
+  const messageText =
+    ctx.update.message?.text || ctx.update.message?.caption || "";
   let groupChatId: string | null = null;
   const commentMatch = messageText.match(/comment=(\d+)/);
   if (commentMatch && commentMatch[1]) {

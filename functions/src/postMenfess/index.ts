@@ -13,6 +13,7 @@ import {
   isForwardedMenfessFromChannelToGroup,
   isValidMessage,
 } from "../utils/helpers";
+import { getMenfessMaxInteract } from "../utils/premium.helpers";
 import type {
   BotContext,
   ListenMenfessState,
@@ -325,6 +326,7 @@ export async function postToChannel(ctx: BotContext) {
           createdAt: new Date(),
           interactUsers: [],
           senderAlias: ctx.session.anonName,
+          maxInteract: getMenfessMaxInteract(ctx.session.premiumStatus),
         });
       await db
         .collection("users")

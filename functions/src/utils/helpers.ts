@@ -173,18 +173,6 @@ export function matchCallbackData(
 }
 
 /**
- * Get a premium badge based on the premium status
- * @param premiumStatus The premium status to get the badge for
- * @returns A string containing the premium badge
- */
-export function getPremiumBadge(premiumStatus: number | null): string {
-  if (premiumStatus === 1) return " 💎";
-  if (premiumStatus === 2) return " 💎💎";
-  if (premiumStatus === 3) return " 💎💎💎";
-  return "";
-}
-
-/**
  * Check if a message meets safety and length requirements
  * @param message The message to validate
  * @returns Boolean indicating if message is valid

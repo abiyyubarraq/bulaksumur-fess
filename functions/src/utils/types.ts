@@ -121,6 +121,7 @@ export interface MenfessDbData {
   senderUserName: string;
   interactUsers: { userId: number; action: string }[];
   groupChatButtonId: number;
+  maxInteract: number;
 }
 
 export interface MenfessReportDbData {
