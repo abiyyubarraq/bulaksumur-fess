@@ -60,6 +60,7 @@ export function initCommands(bot: Bot<BotContext>): void {
       );
       return;
     } else {
+      ctx.session.route = "idle";
       await next();
       return;
     }
@@ -114,6 +115,7 @@ export function initCommands(bot: Bot<BotContext>): void {
   });
 
   bot.callbackQuery("back_to_send_feedback_menu", async (ctx) => {
+    ctx.session.route = "idle";
     await sendReportFeedbackMenu(ctx);
   });
 

@@ -189,13 +189,17 @@ export function getPremiumBadge(premiumStatus: number | null): string {
  * @param message The message to validate
  * @returns Boolean indicating if message is valid
  */
-export function isValidMessage(message: string): boolean {
+export function isValidMessage(
+  message: string,
+  minimalStringLength: number = 32,
+  maximalStringLength: number = 888
+): boolean {
   // Check minimum length of 32 characters
-  if (message.length < 32) {
+  if (message.length < minimalStringLength) {
     return false;
   }
 
-  if (message.length > 888) {
+  if (message.length > maximalStringLength) {
     return false;
   }
 

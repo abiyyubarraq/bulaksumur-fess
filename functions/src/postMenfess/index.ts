@@ -60,7 +60,7 @@ export function initPostHandlers(bot: Bot<BotContext>): void {
 
         if (
           !containsTrigger(messageText, botConfig.postTrigger) &&
-          !isValidMessage(messageText)
+          !isValidMessage(messageText, Boolean(ctx.message.caption) ? 25 : 32)
         ) {
           const keyboard = new InlineKeyboard();
           keyboard.text("« BACK", "back_to_start_post_menu");

@@ -601,7 +601,7 @@ export function initSessionModule(bot: Bot<BotContext>): void {
 
         lastBotMessages.delete(userId);
         await db.collection("users").doc(userId.toString()).set({
-          username: username,
+          username: username.toLowerCase(),
           emailRegistered: ctx.session.emailRegistered,
           gender: ctx.session.gender,
           birthMonth: ctx.session.birthMonth,

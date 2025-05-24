@@ -11,7 +11,7 @@ const waitingForFeedbackMessage = (feedBackType: string) =>
   `\n\n` +
   `*Note: Minimal 32 karakter dan hanya boleh mengandungi huruf, angka, spasi, dan tanda baca* 👍` +
   `\n\n` +
-  `Gunakan bahasa yang sopan ky kmu ngchat admin fakultas y 😊`;
+  `Gunakan bahasa yang sopan ky kmu ngchat admin fakultas y 😊 oiya kamu cuma bisa kirim feedback sekali dalam 12 jam 🎩`;
 
 export function initSendFeedbackHandlers(bot: Bot<BotContext>): void {
   bot.on("message:text", async (ctx, next) => {
@@ -37,9 +37,10 @@ export function initSendFeedbackHandlers(bot: Bot<BotContext>): void {
             waitingForFeedbackMessage(state.feedBackType),
             {
               reply_markup: keyboard,
+              reply_to_message_id: ctx.message?.message_id,
             }
           );
-          ctx.session.route = "send_feedback";
+
           userStates.set(userId, {
             waitingForContent: true,
             messageToDelete: sentMessage?.message_id,
@@ -62,7 +63,10 @@ export function initSendFeedbackHandlers(bot: Bot<BotContext>): void {
           });
         await ctx.reply(
           "🙏 Thankyouu feedbacknya! ✨\n" +
-            "Nanti tak baca yakk kalo lagi nganggur, 💝 luvv yu! 🤗"
+            "Nanti tak baca yakk kalo lagi nganggur, 💝 luvv yu! 🤗",
+          {
+            reply_to_message_id: ctx.message?.message_id,
+          }
         );
         ctx.session.lastSendFeedback = new Date();
       } catch (error) {

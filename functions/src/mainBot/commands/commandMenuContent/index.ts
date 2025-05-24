@@ -168,6 +168,7 @@ export async function sendViewProfileMenu(ctx: BotContext) {
     .where("username", "==", userNameText?.toLowerCase())
     .limit(1)
     .get();
+
   if (userDb.empty || !userDb.docs[0]) {
     await ctx.reply("😔 User tidak ditemukan.", {
       reply_to_message_id: messageId,

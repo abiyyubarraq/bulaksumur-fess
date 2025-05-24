@@ -1,6 +1,6 @@
 import { type Bot, InlineKeyboard } from "grammy";
 import { db } from "../utils/firebase";
-import { checkValidMessage, sanitizeMessage } from "../utils/helpers";
+import { isValidMessage, sanitizeMessage } from "../utils/helpers";
 import type { BotContext } from "../utils/types";
 
 const usersInAnonMessageMode = new Map<
@@ -12,6 +12,16 @@ const userInReportingUserMode = new Map<
   { targetUserId: number; targetUsername: string }
 >();
 let lastBotMessageId: number | null = null;
+
+const waitingReportMessage = (targetUsername: string) =>
+  `🚨 Silahkan balas dengan laporan kamu terkait pengguna @${targetUsername}!\n\n` +
+  "🦊 Dilarang mengirim link atau username, dan hanya boleh mengirim text dengan character ASCII\n" +
+  "🎭 (Minimal 32 karakter, dan maksimal 888 karakter yyaa)";
+
+const waitingAnonMessage = (targetUsername: string) =>
+  `✉️ Silahkan balas dengan pesan anonim yang ingin kamu kirimkan ke @${targetUsername}!\n\n` +
+  "🦊 Dilarang mengirim link atau username, dan hanya boleh mengirim text dengan character ASCII\n" +
+  "🎭 (Minimal 15 karakter, dan maksimal 888 karakter yyaa)";
 
 export function initViewUserProfile(bot: Bot<BotContext>): void {
   // bot.callbackQuery(/^user_(\d+)_block_(\d+)$/, async (ctx) => {
@@ -42,7 +52,7 @@ export function initViewUserProfile(bot: Bot<BotContext>): void {
     );
 
     const botMessage = await ctx.editMessageText(
-      `🚨 Silahkan balas dengan laporan kamu terkait pengguna @${targetUsername}!\n\n`,
+      waitingReportMessage(targetUsername),
       {
         reply_markup: cancelKeyboard,
       }
@@ -68,7 +78,7 @@ export function initViewUserProfile(bot: Bot<BotContext>): void {
     );
 
     const botMessage = await ctx.editMessageText(
-      `✉️ Silahkan balas dengan pesan anonim yang ingin kamu kirimkan ke @${targetUsername}!\n\n`,
+      waitingAnonMessage(targetUsername),
       {
         reply_markup: cancelKeyboard,
       }
@@ -128,10 +138,15 @@ export function initViewUserProfile(bot: Bot<BotContext>): void {
         return;
       }
 
-      if (!checkValidMessage(messageText)) {
-        await ctx.reply(
-          "😔 Pesan tidak valid, dilarang mengirim link atau username, dan hanya boleh mengirim text dengan character ASCII. Silahkan coba lagi."
+      if (!isValidMessage(messageText, 15)) {
+        const cancelKeyboard = new InlineKeyboard().text(
+          "✖️ Cancel",
+          "cancel_anon_message"
         );
+        const lastReply = await ctx.reply(waitingAnonMessage(targetUsername), {
+          reply_markup: cancelKeyboard,
+        });
+        lastBotMessageId = (lastReply as { message_id: number }).message_id;
         return;
       }
 
@@ -176,6 +191,20 @@ export function initViewUserProfile(bot: Bot<BotContext>): void {
         ctx.session.route = "idle";
         return;
       }
+      if (!isValidMessage(messageText)) {
+        const cancelKeyboard = new InlineKeyboard().text(
+          "✖️ Cancel",
+          "cancel_report_user"
+        );
+        const lastReply = await ctx.reply(
+          waitingReportMessage(targetUsername),
+          {
+            reply_markup: cancelKeyboard,
+          }
+        );
+        lastBotMessageId = (lastReply as { message_id: number }).message_id;
+        return;
+      }
 
       await db.collection(`users/${targetUserId}/reports`).add({
         reporterId: ctx.from.id,
@@ -189,7 +218,10 @@ export function initViewUserProfile(bot: Bot<BotContext>): void {
       });
 
       await ctx.reply(
-        `🚨 Laporan terkait pengguna @${targetUsername} telah berhasil dikirim ke admin.`
+        `🚨 Laporan terkait pengguna @${targetUsername} telah berhasil dikirim ke admin.`,
+        {
+          reply_to_message_id: ctx.message.message_id,
+        }
       );
 
       ctx.session.route = "idle";

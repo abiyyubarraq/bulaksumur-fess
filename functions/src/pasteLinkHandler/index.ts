@@ -1,7 +1,7 @@
 import { Bot, InlineKeyboard } from "grammy";
 import { botConfig } from "../utils/config";
 import { db } from "../utils/firebase";
-import { checkValidMessage, extractMenfessUID } from "../utils/helpers";
+import { extractMenfessUID, isValidMessage } from "../utils/helpers";
 import type { BotContext, MenfessDbData } from "../utils/types";
 
 const userInAnonReplyMode = new Map<
@@ -12,6 +12,11 @@ const userInAnonReplyMode = new Map<
     messageShoudlDeleted: number | undefined;
   }
 >();
+
+const waitingAnonReplyMessage =
+  "🔮 Silahkan balas dengan reply anonim yang ingin kamu kirim\n\n" +
+  "🦊 Dilarang mengirim link atau username, dan hanya boleh mengirim text dengan character ASCII\n" +
+  "🎭 (Minimal 15 karakter, dan maksimal 888 karakter yyaa)";
 
 const validateIds = (
   ctx: BotContext,
@@ -191,10 +196,13 @@ export async function initPasteLinkHandler(bot: Bot<BotContext>) {
       await ctx.reply("❌ Pesan tidak ditemukan");
       return;
     }
-
-    await ctx.editMessageText(
-      "🔮 Silahkan balas dengan reply anonim yang ingin kamu kirim"
+    const cancelKeyboard = new InlineKeyboard().text(
+      "✖️ Cancel",
+      "cancel_anon_reply"
     );
+    await ctx.editMessageText(waitingAnonReplyMessage, {
+      reply_markup: cancelKeyboard,
+    });
 
     if (!ctx.from) return;
     ctx.session.route = "anon_reply_mode";
@@ -219,10 +227,13 @@ export async function initPasteLinkHandler(bot: Bot<BotContext>) {
     ) {
       return;
     }
-
-    await ctx.editMessageText(
-      "🔮 Silahkan balas dengan reply anonim yang ingin kamu kirim"
+    const cancelKeyboard = new InlineKeyboard().text(
+      "✖️ Cancel",
+      "cancel_anon_reply"
     );
+    await ctx.editMessageText(waitingAnonReplyMessage, {
+      reply_markup: cancelKeyboard,
+    });
 
     if (!ctx.from) return;
     ctx.session.route = "anon_reply_mode";
@@ -231,6 +242,13 @@ export async function initPasteLinkHandler(bot: Bot<BotContext>) {
       senderInfo: ctx.session.gender === "M" ? "🕺 #M✘✘" : "💃 #F✘✘",
       messageShoudlDeleted: messageId,
     });
+  });
+
+  bot.callbackQuery("cancel_anon_message", async (ctx) => {
+    ctx.session.route = "idle";
+    userInAnonReplyMode.delete(ctx.from.id);
+
+    await ctx.editMessageText("Kamu membatalkan pengiriman reply anonim.");
   });
 
   bot.on("message:text", async (ctx, next) => {
@@ -250,14 +268,32 @@ export async function initPasteLinkHandler(bot: Bot<BotContext>) {
           messageShoudlDeleted: undefined,
         };
 
-      const messageId = ctx.message?.message_id;
-      if (!checkValidMessage(ctx.message.text)) {
-        await ctx.reply(
-          "😔 Pesan tidak valid, dilarang mengirim link atau username, dan hanya boleh mengirim text dengan character ASCII. Silahkan coba lagi."
+      if (messageShoudlDeleted) {
+        await ctx.api.deleteMessage(ctx.chat.id, messageShoudlDeleted);
+      }
+
+      if (!isValidMessage(ctx.message.text, 15)) {
+        const cancelKeyboard = new InlineKeyboard().text(
+          "✖️ Cancel",
+          "cancel_anon_reply"
         );
+        const lastReply = await ctx.reply(waitingAnonReplyMessage, {
+          reply_markup: cancelKeyboard,
+        });
+
+        userInAnonReplyMode.set(userId, {
+          groupChatId,
+          senderInfo,
+          messageShoudlDeleted: (lastReply as { message_id: number })
+            .message_id,
+        });
+
         return;
       }
-      ctx.api.sendMessage(
+
+      const messageId = ctx.message?.message_id;
+
+      const sentMessage = await ctx.api.sendMessage(
         botConfig.groupChatId,
         `${ctx.message.text}\n\n${senderInfo}`,
         {
@@ -265,14 +301,15 @@ export async function initPasteLinkHandler(bot: Bot<BotContext>) {
         }
       );
 
-      if (messageShoudlDeleted) {
-        await ctx.api.deleteMessage(ctx.chat.id, messageShoudlDeleted);
-      }
       ctx.session.route = "idle";
       userInAnonReplyMode.delete(userId);
 
-      ctx.reply("👌 Reply anonim kamu berhasil dikirim", {
+      const link = `https://t.me/${botConfig.groupChatId.replace("@", "")}/${sentMessage.message_id}`;
+
+      const keyboard = new InlineKeyboard().url("🔗Link", link);
+      await ctx.reply("👌 Reply anonim kamu berhasil dikirim", {
         reply_to_message_id: messageId,
+        reply_markup: keyboard,
       });
     } else {
       await next();
