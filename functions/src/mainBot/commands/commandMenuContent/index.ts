@@ -192,7 +192,7 @@ export async function sendViewProfileMenu(ctx: BotContext) {
       "⚠️ Report",
       `user_${userId}_report_${userDbData.userId}_${userDbData.username}`
     )
-    .url("👤 PROFILE", `https://t.me/${userDbData.username}`);
+    .url("👤 PROFILE", `tg://user?id=${userDbData.userId}`);
 
   // Format profile display text with dividers for better readability
   let profileText = `<blockquote>${userDbData.bio}</blockquote>\n\n`;

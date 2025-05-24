@@ -111,7 +111,7 @@ export function initInteractionHandlers(bot: Bot<BotContext>): void {
           "🥂 Chat Me!",
           `response_interact_chat_me_${menfessDbData.channelChatId}_${userId}`
         )
-        .url("🕵️ Profile?", `https://t.me/${userName}`)
+        .url("🕵️ Profile?", `tg://user?id=${userId}`)
         .row()
         .url(
           "🔗 Menfess",
@@ -121,7 +121,7 @@ export function initInteractionHandlers(bot: Bot<BotContext>): void {
       await ctx.api.sendMessage(
         menfessDbData.senderId,
         `✨ *Hallooo!* ✨\n\n` +
-          `🎉 Seseorang tertarik dengan menfess kamu! 💫\n\n` +
+          `🎉 Seseorang dengan username @${userName} tertarik dengan menfess kamu! 💫\n\n` +
           `📝 Menfess kamu:\n\n` +
           `❝${menfessOnGroupText}❞\n\n` +
           `💝 Cek profilnya di bawah ini! 👇`,
@@ -221,21 +221,16 @@ export function initInteractionHandlers(bot: Bot<BotContext>): void {
     }
 
     const keyboard = new InlineKeyboard()
+      .url(`👯 Sender`, `tg://user?id=${senderMenfessId}`)
       .url(
-        `👤 Sender`,
-        `https://t.me/${senderMenfessUsername}/${senderMenfessId}`
-      )
-      .url(
-        "Menfess",
+        "🖇️ Menfess",
         `https://t.me/${botConfig.channelId.replace("@", "")}/${channelChatId}`
       )
       .row();
 
     const messages = {
-      chat_me:
-        "User dari menfess yang kamu hit ingin berbicara dengan kamu! 💘\n",
-      spill_me:
-        "User dari menfess yang kamu hit setuju untuk ngespill profilenya ke kamu! 🫗\n",
+      chat_me: `💌💌\n\nUser @${senderMenfessUsername} dari menfess yang kamu hit ingin berbicara dengan kamu! 💘\n`,
+      spill_me: `💌💌\n\nUser @${senderMenfessUsername} dari menfess yang kamu hit setuju untuk ngespill profilenya ke kamu! 🫗\n`,
     };
 
     await ctx.api.sendMessage(
