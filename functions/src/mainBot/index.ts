@@ -8,7 +8,7 @@ import { initSendFeedbackHandlers } from "../sendFeedback";
 import { initTosMenu } from "../tosMenu";
 import { botConfig } from "../utils/config";
 import type { BotContext, SessionData } from "../utils/types";
-import { initViewUserProfile } from "../view-user-profile";
+import { initViewUserProfile } from "../viewUserProfile";
 import { initCommands } from "./commands/index";
 
 export function startBot(bot: Bot<BotContext>): void {
