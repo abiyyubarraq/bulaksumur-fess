@@ -101,8 +101,9 @@ export async function startSendFeedBackListener(
 
   const keyboard = new InlineKeyboard();
   keyboard.text("« BACK", "back_to_send_feedback_menu");
-  // Set user state to waiting for content
-  const sentMessage = (await ctx.editMessageText(
+
+  await ctx.editMessageText("....");
+  const sentMessage = (await ctx.reply(
     waitingForFeedbackMessage(feedBackType),
     {
       reply_markup: keyboard,

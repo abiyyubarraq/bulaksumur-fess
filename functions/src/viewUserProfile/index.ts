@@ -51,12 +51,10 @@ export function initViewUserProfile(bot: Bot<BotContext>): void {
       "cancel_report_user"
     );
 
-    const botMessage = await ctx.editMessageText(
-      waitingReportMessage(targetUsername),
-      {
-        reply_markup: cancelKeyboard,
-      }
-    );
+    await ctx.editMessageText("....");
+    const botMessage = await ctx.reply(waitingReportMessage(targetUsername), {
+      reply_markup: cancelKeyboard,
+    });
     lastBotMessageId = (botMessage as { message_id: number }).message_id;
   });
 
@@ -77,12 +75,10 @@ export function initViewUserProfile(bot: Bot<BotContext>): void {
       "cancel_anon_message"
     );
 
-    const botMessage = await ctx.editMessageText(
-      waitingAnonMessage(targetUsername),
-      {
-        reply_markup: cancelKeyboard,
-      }
-    );
+    await ctx.editMessageText("....");
+    const botMessage = await ctx.reply(waitingAnonMessage(targetUsername), {
+      reply_markup: cancelKeyboard,
+    });
     lastBotMessageId = (botMessage as { message_id: number }).message_id;
   });
 

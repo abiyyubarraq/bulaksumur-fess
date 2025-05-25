@@ -27,6 +27,7 @@ export function initCommands(bot: Bot<BotContext>): void {
   bot.hears(
     new RegExp(`https://t\\.me/${botConfig.channelId.replace("@", "")}/\\d+$`),
     async (ctx) => {
+      ctx.session.route = "idle";
       await sendPasteChannelLinkMenu(ctx);
     }
   );
@@ -36,6 +37,7 @@ export function initCommands(bot: Bot<BotContext>): void {
       `https://t\\.me/${botConfig.groupChatId.replace("@", "")}/\\d+$`
     ),
     async (ctx) => {
+      ctx.session.route = "idle";
       await sendPasteGroupLinkMenu(ctx);
     }
   );
@@ -45,6 +47,7 @@ export function initCommands(bot: Bot<BotContext>): void {
       `https://t\\.me/${botConfig.channelId.replace("@", "")}/(\\d+)(\\?comment=(\\d+))?$`
     ),
     async (ctx) => {
+      ctx.session.route = "idle";
       await sendPasteChannelCommentLinkMenu(ctx);
     }
   );

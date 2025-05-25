@@ -236,7 +236,8 @@ export async function startPostMenfessListener(ctx: BotContext): Promise<void> {
   const keyboard = new InlineKeyboard();
   keyboard.text("« BACK", "back_to_start_post_menu");
   // Set user state to waiting for content
-  const sentMessage = (await ctx.editMessageText(waitingForMenfessMessage, {
+  await ctx.editMessageText("....");
+  const sentMessage = (await ctx.reply(waitingForMenfessMessage, {
     reply_markup: keyboard,
   })) as { message_id: number };
   ctx.session.route = "post_menfess";

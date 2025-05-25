@@ -201,7 +201,8 @@ export async function initPasteLinkHandler(bot: Bot<BotContext>) {
       "✖️ Cancel",
       "cancel_anon_reply"
     );
-    await ctx.editMessageText(waitingAnonReplyMessage, {
+    await ctx.editMessageText("....");
+    await ctx.reply(waitingAnonReplyMessage, {
       reply_markup: cancelKeyboard,
     });
 
@@ -232,7 +233,8 @@ export async function initPasteLinkHandler(bot: Bot<BotContext>) {
       "✖️ Cancel",
       "cancel_anon_reply"
     );
-    await ctx.editMessageText(waitingAnonReplyMessage, {
+    await ctx.editMessageText("....");
+    await ctx.reply(waitingAnonReplyMessage, {
       reply_markup: cancelKeyboard,
     });
 
