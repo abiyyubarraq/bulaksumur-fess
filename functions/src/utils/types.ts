@@ -2,6 +2,23 @@ import type { Timestamp } from "firebase-admin/firestore";
 import type { SessionFlavor } from "grammy";
 import type { Context } from "grammy";
 
+export enum MenfessHashtag {
+  SELL = "#SELL",
+  BUY = "#BUY",
+  LOKER = "#LOKER",
+  DATING = "#DATING",
+  DINNER = "#DINNER",
+  JOGGING = "#JOGGING",
+  GYM = "#GYM",
+  MOVIE = "#MOVIE",
+  PARTY = "#PARTY",
+  SHOPPING = "#SHOPPING",
+  CONCERT = "#CONCERT",
+  MUSIC = "#MUSIC",
+  STUDY = "#STUDY",
+  WFC = "#WFC",
+}
+
 export interface SessionData {
   isRegistered: boolean;
   anonName: string | null;
@@ -40,6 +57,10 @@ export interface SessionData {
   lastUserUpdatedDataWithDb: Date | null;
   lastSentInteract: Date | null;
   route: string;
+  isShowDiamond: boolean;
+  isShowFaculty: boolean;
+  isShowAge: boolean;
+  age: number | null;
 }
 
 export type BotContext = Context & SessionFlavor<SessionData>;
@@ -48,9 +69,15 @@ export type BotContext = Context & SessionFlavor<SessionData>;
 export type ListenMenfessState = {
   waitingForContent: boolean;
   messageToDelete?: number;
+  waitingForTos: boolean;
+  ctxToSend?: BotContext;
+  hashTagUsed?: string;
 };
 
-export type ListenFeedbackState = ListenMenfessState & {
+export type ListenFeedbackState = Omit<
+  ListenMenfessState,
+  "waitingForTos" | "ctxToSend" | "hashTagUsed"
+> & {
   feedBackType: "kritik" | "saran" | "laporan";
 };
 

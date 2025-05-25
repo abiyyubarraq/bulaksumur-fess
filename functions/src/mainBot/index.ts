@@ -8,9 +8,9 @@ import { initSendFeedbackHandlers } from "../sendFeedback";
 import { initTosMenu } from "../tosMenu";
 import { botConfig } from "../utils/config";
 import type { BotContext, SessionData } from "../utils/types";
+import { initViewMyProfile } from "../viewMyProfile";
 import { initViewUserProfile } from "../viewUserProfile";
 import { initCommands } from "./commands/index";
-
 export function startBot(bot: Bot<BotContext>): void {
   bot.start({
     drop_pending_updates: true,
@@ -45,6 +45,10 @@ export function createBot(): Bot<BotContext> {
       agreement2: null,
       agreement3: null,
       route: "idle",
+      isShowDiamond: true,
+      isShowFaculty: true,
+      isShowAge: true,
+      age: null,
     };
   }
   bot.use(session({ initial }));
@@ -73,7 +77,7 @@ export function createBot(): Bot<BotContext> {
   initInteractionHandlers(bot);
   initSendFeedbackHandlers(bot);
   initViewUserProfile(bot);
-
+  initViewMyProfile(bot);
   bot.catch((err) => {
     console.error("Bot error occurred:", err);
   });

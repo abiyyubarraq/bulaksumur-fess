@@ -46,7 +46,7 @@ const myData = (ctx: BotContext, userId: number) => {
   );
 };
 
-export async function sendMainMenu(ctx: BotContext) {
+export async function sendMainMenu(ctx: BotContext, isBack: boolean = false) {
   const userId = ctx.from?.id;
   if (!userId) return;
 
@@ -68,10 +68,17 @@ export async function sendMainMenu(ctx: BotContext) {
 
   const messageText = myData(ctx, userId) + footer;
 
-  await ctx.reply(messageText, {
-    reply_markup: keyboard,
-    parse_mode: "HTML",
-  });
+  if (isBack) {
+    await ctx.editMessageText(messageText, {
+      reply_markup: keyboard,
+      parse_mode: "HTML",
+    });
+  } else {
+    await ctx.reply(messageText, {
+      reply_markup: keyboard,
+      parse_mode: "HTML",
+    });
+  }
 }
 
 export const viewMyProfileMenu = async (ctx: BotContext) => {
@@ -79,7 +86,7 @@ export const viewMyProfileMenu = async (ctx: BotContext) => {
   if (!userId) return;
 
   const keyboard = new InlineKeyboard()
-    .text("Statistic 📊", "view_my_statistic")
+    // .text("Statistic 📊", "view_my_statistic")
     .text("Setting ⚙️", "view_my_settings")
     .row()
     .text("« BACK", "back_to_main_menu");

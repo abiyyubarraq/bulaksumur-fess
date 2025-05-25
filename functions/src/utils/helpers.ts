@@ -1,6 +1,7 @@
 import { nanoid } from "nanoid";
 import { botConfig } from "./config";
-import type { BotContext } from "./types";
+import { getPremiumBadge } from "./premium.helpers";
+import type { BotContext, SessionData } from "./types";
 
 /**
  * Get a formatted date string for menfess posts
@@ -249,4 +250,22 @@ export function isChatFromUserToGroup(ctx: BotContext): boolean {
     ctx.update?.message?.chat?.id &&
       ctx.update?.message?.chat?.id === Number(botConfig.groupChatIdNumber)
   );
+}
+export function getFooterMessage(session: SessionData): string {
+  return (
+    "\n\n" +
+    (session.gender === "M" ? "🕺 #M" : "💃 #F") +
+    getAge(session) +
+    `${session.isShowDiamond ? getPremiumBadge(session.premiumStatus) : ""}` +
+    `${session.isShowFaculty ? "\n" + "🏫 " + session.faculty : ""}`
+  );
+}
+
+export function getAge(session: SessionData): string {
+  if (!session.age) return "⁕";
+  return session.isShowAge
+    ? session.age.toString()
+    : session.age <= 25
+      ? "✘✘"
+      : "⁕⁕";
 }

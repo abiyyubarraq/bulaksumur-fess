@@ -1,7 +1,11 @@
 import { Bot, InlineKeyboard } from "grammy";
 import { botConfig } from "../utils/config";
 import { db } from "../utils/firebase";
-import { extractMenfessUID, isValidMessage } from "../utils/helpers";
+import {
+  extractMenfessUID,
+  getFooterMessage,
+  isValidMessage,
+} from "../utils/helpers";
 import type { BotContext, MenfessDbData } from "../utils/types";
 
 const userInAnonReplyMode = new Map<
@@ -202,7 +206,7 @@ export async function initPasteLinkHandler(bot: Bot<BotContext>) {
       "cancel_anon_reply"
     );
     await ctx.editMessageText("....");
-    await ctx.reply(waitingAnonReplyMessage, {
+    const lastReply = await ctx.reply(waitingAnonReplyMessage, {
       reply_markup: cancelKeyboard,
     });
 
@@ -210,14 +214,13 @@ export async function initPasteLinkHandler(bot: Bot<BotContext>) {
     ctx.session.route = "anon_reply_mode";
     userInAnonReplyMode.set(ctx.from.id, {
       groupChatId: menfessDbData.groupChatId,
-      senderInfo: ctx.session.gender === "M" ? "🕺 #M✘✘" : "💃 #F✘✘",
-      messageShoudlDeleted: messageId,
+      senderInfo: getFooterMessage(ctx.session),
+      messageShoudlDeleted: (lastReply as { message_id: number }).message_id,
     });
   });
 
   bot.callbackQuery(/^send_anon_reply_to_group_(\d+)$/, async (ctx) => {
     const groupChatId = ctx.match[1];
-    const messageId = ctx.update.callback_query?.message?.message_id;
 
     if (
       !(await handleValidationErrors(
@@ -234,7 +237,7 @@ export async function initPasteLinkHandler(bot: Bot<BotContext>) {
       "cancel_anon_reply"
     );
     await ctx.editMessageText("....");
-    await ctx.reply(waitingAnonReplyMessage, {
+    const lastReply = await ctx.reply(waitingAnonReplyMessage, {
       reply_markup: cancelKeyboard,
     });
 
@@ -242,8 +245,8 @@ export async function initPasteLinkHandler(bot: Bot<BotContext>) {
     ctx.session.route = "anon_reply_mode";
     userInAnonReplyMode.set(ctx.from.id, {
       groupChatId: Number(groupChatId),
-      senderInfo: ctx.session.gender === "M" ? "🕺 #M✘✘" : "💃 #F✘✘",
-      messageShoudlDeleted: messageId,
+      senderInfo: getFooterMessage(ctx.session),
+      messageShoudlDeleted: (lastReply as { message_id: number }).message_id,
     });
   });
 
@@ -298,7 +301,7 @@ export async function initPasteLinkHandler(bot: Bot<BotContext>) {
 
       const sentMessage = await ctx.api.sendMessage(
         botConfig.groupChatId,
-        `${ctx.message.text}\n\n${senderInfo}`,
+        `${ctx.message.text}${senderInfo}`,
         {
           reply_to_message_id: groupChatId,
         }

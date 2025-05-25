@@ -88,7 +88,7 @@ export function initCommands(bot: Bot<BotContext>): void {
   });
 
   bot.callbackQuery("back_to_main_menu", async (ctx) => {
-    await sendMainMenu(ctx);
+    await sendMainMenu(ctx, true);
   });
 
   bot.callbackQuery("view_my_profile", async (ctx) => {

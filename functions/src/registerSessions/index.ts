@@ -75,6 +75,10 @@ const loadUserDataIntoSession = async (
       ctx.session.agreement1 = userData.agreement1 ?? false;
       ctx.session.agreement2 = userData.agreement2 ?? false;
       ctx.session.agreement3 = userData.agreement3 ?? false;
+      ctx.session.age = moment(new Date()).diff(
+        moment(new Date(userData.birthYear, userData.birthMonth - 1, 1)),
+        "years"
+      );
       return true;
     }
   }
