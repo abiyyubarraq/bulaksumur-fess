@@ -39,7 +39,7 @@ export const AGREEMENTS: AgreementMap = {
       "10. Dilarang mengirimkan foto, video, atau suara orang lain, barang pribadi orang lain, tempat pribadi orang lain, atau apapun tentang orang lain yang dapat disimpulkan merujuk ke orang lain tersebut tanpa seizin tertulis dari orang yang bersangkutan. Pengecualian jika foto, video, atau suara tersebut diambil di tempat umum.\n\n" +
       "11. Tidak diperbolehkan menggunakan fitur BOT untuk mengunggah permasalahan pribadi antar member yang berpotensi menimbulkan kegaduhan, termasuk tapi tidak terbatas berupa sindiran sarkas dan sejenisnya.\n\n" +
       "12. Dilarang melakukan aktivitas jual beli, promosi, lowongan kerja, atau investasi dalam bentuk apapun di Base. Segala bentuk Jual/beli/promosi hanya boleh melalui BOT baik berupa Menfes, Giveaway, dengan syarat harus menggunakan hashtag #SEL #BUY #LOKER.\n\n" +
-      "13. Mengirimkan Giveaway hanya boleh menggunakan fitur Giveaway dari BOT.\n\n" +
+      "13. Dilarang mmengirim menfess yang berkaitan dengan meiminjam/meminjamkan uang kepada member demi keamanan dan kenyamanan bersama.\n\n" +
       "14. Dilarang menggunakan Base untuk mendapatkan keuntungan pribadi atau kelompok tanpa seizin Admin. Termasuk mengemis, meminta-minta, atau menjual kesedihan.\n\n" +
       "15. Tidak diperbolehkan manipulatif, menggiring opini yang merusak keharmonisan komunitas, perusuh, atau memecah belah Base.\n\n" +
       "16. Tidak diperbolehkan melakukan SPAM/mengirimkan pesan berulang dalam waktu berdekatan baik menggunakan fitur BOT maupun chat langsung di group.\n\n" +
