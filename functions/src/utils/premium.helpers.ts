@@ -12,7 +12,20 @@ export function getPremiumBadge(premiumStatus: number | null): string {
 
 export function getMenfessMaxInteract(premiumStatus: number | null): number {
   if (premiumStatus === 1) return 10;
-  if (premiumStatus === 2) return 23;
+  if (premiumStatus === 2) return 24;
   if (premiumStatus === 3) return 90;
   return 2;
+}
+
+export function getDailyGoldQuota(premiumStatus: number | null): number {
+  if (premiumStatus === 1) return 1200;
+  if (premiumStatus === 2) return 3300;
+  if (premiumStatus === 3) return 7000;
+  return 300;
+}
+
+export enum GoldRate {
+  INTERACT = 110,
+  ANON_REPLY = 55,
+  ANON_MESSAGE = 110,
 }

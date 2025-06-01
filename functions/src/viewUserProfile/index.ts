@@ -19,12 +19,12 @@ let lastBotMessageId: number | null = null;
 
 const waitingReportMessage = (targetUsername: string) =>
   `🚨 Silahkan balas dengan laporan kamu terkait pengguna @${targetUsername}!\n\n` +
-  "🦊 Dilarang mengirim link atau username, dan hanya boleh mengirim text dengan character ASCII\n" +
+  "🦊 Dilarang mengirim link selain dari t.me channel/group dan dilarang mengirim username, dan hanya boleh mengirim text dengan character ASCII\n" +
   "🎭 (Minimal 32 karakter, dan maksimal 888 karakter yyaa)";
 
 const waitingAnonMessage = (targetUsername: string) =>
   `✉️ Silahkan balas dengan pesan anonim yang ingin kamu kirimkan ke @${targetUsername}!\n\n` +
-  "🦊 Dilarang mengirim link atau username, dan hanya boleh mengirim text dengan character ASCII\n" +
+  "🦊 Dilarang mengirim link selain dari t.me channel/group dan dilarang mengirim username, dan hanya boleh mengirim text dengan character ASCII\n" +
   "🎭 (Minimal 15 karakter, dan maksimal 888 karakter yyaa)";
 
 export function initViewUserProfile(bot: Bot<BotContext>): void {
@@ -71,8 +71,6 @@ export function initViewUserProfile(bot: Bot<BotContext>): void {
       targetUserId: targetUserId,
       targetUsername: targetUsername,
     });
-
-    ctx.session.lastSentInteract = new Date();
 
     const cancelKeyboard = new InlineKeyboard().text(
       "✖️ Cancel",

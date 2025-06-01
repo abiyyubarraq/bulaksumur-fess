@@ -61,6 +61,7 @@ export interface SessionData {
   isShowFaculty: boolean;
   isShowAge: boolean;
   age: number | null;
+  dailyGoldQuota: number;
 }
 
 export type BotContext = Context & SessionFlavor<SessionData>;
@@ -148,7 +149,7 @@ export interface MenfessDbData {
   senderUserName: string;
   interactUsers: { userId: number; action: string }[];
   groupChatButtonId: number;
-  maxInteract: number;
+  freeInteractQuota: number;
 }
 
 export interface MenfessReportDbData {

@@ -1,11 +1,18 @@
 import { Bot, InlineKeyboard } from "grammy";
+import {
+  getMenfessText,
+  handleMaxInteractionsReached,
+  updateInteractUsers,
+} from "../interactions";
 import { botConfig } from "../utils/config";
 import { db } from "../utils/firebase";
 import {
   extractMenfessUID,
   getFooterMessage,
   isValidMessage,
+  sliceMenfessText,
 } from "../utils/helpers";
+import { GoldRate } from "../utils/premium.helpers";
 import type { BotContext, MenfessDbData } from "../utils/types";
 
 const userInAnonReplyMode = new Map<
@@ -17,9 +24,28 @@ const userInAnonReplyMode = new Map<
   }
 >();
 
+const userInInteractionPlusMode = new Map<
+  number,
+  {
+    senderInfo: string;
+    messageShoudlDeleted: number | undefined;
+    action: string;
+    menfessDbData: MenfessDbData;
+    menfessOnGroupText: string;
+    interactorUserName: string;
+    menfessUID: string;
+    channelChatId: string;
+  }
+>();
+
 const waitingAnonReplyMessage =
   "🔮 Silahkan balas dengan reply anonim yang ingin kamu kirim\n\n" +
-  "🦊 Dilarang mengirim link atau username, dan hanya boleh mengirim text dengan character ASCII\n" +
+  "🦊 Dilarang mengirim link selain dari t.me channel/group dan dilarang mengirim username, dan hanya boleh mengirim text dengan character ASCII\n" +
+  "🎭 (Minimal 15 karakter, dan maksimal 888 karakter yyaa)";
+
+const waitingInteractionPlusMessage =
+  "🔮 Silahkan Balas dengan isi pesan untuk Interaksi ✚ Kamu\n\n" +
+  "🦊 Dilarang mengirim link selain dari t.me channel/group dan dilarang mengirim username, dan hanya boleh mengirim text dengan character ASCII\n" +
   "🎭 (Minimal 15 karakter, dan maksimal 888 karakter yyaa)";
 
 const validateIds = (
@@ -54,11 +80,22 @@ const sendReplyWithKeyboard = async (
   isChannel: boolean
 ) => {
   const keyboard = new InlineKeyboard();
+  const premiumStatus = ctx.session.premiumStatus;
+
   const callbackPrefix = isChannel
     ? "send_anon_reply_to_channel_"
     : "send_anon_reply_to_group_";
-  keyboard.text("🥷 Anon Reply", `${callbackPrefix}${sourceId}`);
-  // .text("‼️Report", `report_menfess_${isChannel ? "channel" : "group"}_${sourceId}`);
+  if (premiumStatus && premiumStatus > 1 && isChannel) {
+    keyboard
+      .text("👊 Hit Me! ✚", `hitme_plus_${sourceId}`)
+      .text("🕵️ Who? ✚", `who_plus_${sourceId}`)
+      .text("💬 Talk! ✚", `talk_plus_${sourceId}`)
+      .row()
+      .text("🥷 Anon Reply", `${callbackPrefix}${sourceId}`);
+  } else {
+    keyboard.text("🥷 Anon Reply", `${callbackPrefix}${sourceId}`);
+    // .text("‼️Report", `report_menfess_${isChannel ? "channel" : "group"}_${sourceId}`)
+  }
 
   await ctx.api.copyMessage(
     userId,
@@ -151,16 +188,19 @@ const handleValidationErrors = async (
   isValidChatId: boolean
 ): Promise<boolean> => {
   if (!userId) {
+    await ctx.editMessageText("...");
     await ctx.reply("❌ User tidak ditemukan");
     return false;
   }
 
   if (!isValidChatId) {
+    await ctx.editMessageText("...");
     await ctx.reply("❌ Group chat tidak ditemukan");
     return false;
   }
 
   if (!chatId) {
+    await ctx.editMessageText("...");
     await ctx.reply("❌ Chat tidak ditemukan");
     return false;
   }
@@ -170,10 +210,15 @@ const handleValidationErrors = async (
 
 export async function initPasteLinkHandler(bot: Bot<BotContext>) {
   bot.callbackQuery(/^send_anon_reply_to_channel_(\d+)$/, async (ctx) => {
+    if (ctx.session.dailyGoldQuota < GoldRate.INTERACT) {
+      await ctx.answerCallbackQuery(
+        "Gold kamu tidak mencukupi ☹️ Silakan upgrade ke premium member untuk mendapat gold lebih banyak 💸."
+      );
+      return;
+    }
     const menfessText = ctx.update.callback_query?.message?.text;
     const channelChatId = ctx.match[1];
     const menfessUID = extractMenfessUID(menfessText);
-    const messageId = ctx.update.callback_query?.message?.message_id;
 
     if (
       !(await handleValidationErrors(
@@ -187,6 +232,7 @@ export async function initPasteLinkHandler(bot: Bot<BotContext>) {
     }
 
     if (!menfessText || !menfessUID) {
+      await ctx.editMessageText("...");
       await ctx.reply("❌ Pesan tidak ditemukan");
       return;
     }
@@ -198,6 +244,7 @@ export async function initPasteLinkHandler(bot: Bot<BotContext>) {
       .then((doc) => doc.data() as MenfessDbData);
 
     if (!menfessDbData) {
+      await ctx.editMessageText("...");
       await ctx.reply("❌ Pesan tidak ditemukan");
       return;
     }
@@ -220,6 +267,12 @@ export async function initPasteLinkHandler(bot: Bot<BotContext>) {
   });
 
   bot.callbackQuery(/^send_anon_reply_to_group_(\d+)$/, async (ctx) => {
+    if (ctx.session.dailyGoldQuota < GoldRate.INTERACT) {
+      await ctx.answerCallbackQuery(
+        "Gold kamu tidak mencukupi ☹️ Silakan upgrade ke premium member untuk mendapat gold lebih banyak 💸."
+      );
+      return;
+    }
     const groupChatId = ctx.match[1];
 
     if (
@@ -255,6 +308,134 @@ export async function initPasteLinkHandler(bot: Bot<BotContext>) {
     userInAnonReplyMode.delete(ctx.from.id);
 
     await ctx.editMessageText("Kamu membatalkan pengiriman reply anonim.");
+  });
+
+  bot.callbackQuery(/^back_to_paste_link_handler_(\d+)$/, async (ctx) => {
+    const channelChatId = ctx.match[1];
+    ctx.session.route = "idle";
+    userInInteractionPlusMode.delete(ctx.from.id);
+    const { userId, messageId } = validateIds(
+      ctx,
+      channelChatId,
+      "❌ Channel chat tidak ditemukan, silahkan cek kembali link channel yang kamu masukkan\n\n" +
+        "🔗 Contoh link channel yang benar: https://t.me/usernameChannel/111"
+    );
+
+    if (!userId) return;
+    await ctx.deleteMessage();
+    await sendReplyWithKeyboard(
+      ctx,
+      userId,
+      channelChatId as string,
+      Number(channelChatId),
+      messageId,
+      true
+    );
+  });
+
+  bot.callbackQuery(/^(hitme|who|talk)_plus_(.+)$/, async (ctx) => {
+    const action = ctx.callbackQuery.data.split("_")[0];
+    const channelChatId = ctx.callbackQuery.data.split("_")[2];
+    const userId = ctx.from?.id;
+    const userName = ctx.from?.username;
+
+    if (!userId || !action || !userName) {
+      return;
+    }
+
+    const menfessText = ctx.update.callback_query?.message?.text;
+    const menfessUID = extractMenfessUID(menfessText);
+    if (
+      !(await handleValidationErrors(
+        ctx,
+        ctx.from?.id,
+        channelChatId,
+        !!channelChatId
+      ))
+    ) {
+      return;
+    }
+
+    if (!menfessUID || !menfessText) {
+      await bot.api.answerCallbackQuery(ctx.callbackQuery.id, {
+        show_alert: true,
+        text: "🌪️ Waduh! Pesan aslinya tidak dapat ditemukan nih 🍃",
+      });
+      return;
+    }
+
+    const menfessDbData = await db
+      .collection("menfess")
+      .doc(menfessUID)
+      .get()
+      .then((doc) => doc.data() as MenfessDbData | undefined);
+
+    if (!menfessDbData) {
+      await bot.api.answerCallbackQuery(ctx.callbackQuery.id, {
+        show_alert: true,
+        text: "🎪 Ups! Pesan aslinya tidak dapat ditemukan nih 🎭",
+      });
+      return;
+    }
+
+    if (menfessDbData.senderId === userId) {
+      await bot.api.answerCallbackQuery(ctx.callbackQuery.id, {
+        show_alert: true,
+        text: "🎪 Ehh.. Kamu tidak bisa berinteraksi dengan menfess kamu sendiri 🎭",
+      });
+      return;
+    }
+
+    if (menfessDbData.interactUsers.some((user) => user.userId === userId)) {
+      await bot.api.answerCallbackQuery(ctx.callbackQuery.id, {
+        show_alert: true,
+        text: "🎪 Kamu sudah berinteraksi dengan menfess ini sebelumnya 🎭",
+      });
+      return;
+    }
+    const hasReachedMaxFreeQuotas =
+      ctx.session.dailyGoldQuota < GoldRate.INTERACT &&
+      menfessDbData.freeInteractQuota < 1;
+
+    if (hasReachedMaxFreeQuotas) {
+      await bot.api.answerCallbackQuery(ctx.callbackQuery.id, {
+        show_alert: true,
+        text: "💥 Ups! Goldmu tidak cukup dan menfess sudah kehabisan free kuota 🥲",
+      });
+
+      if (hasReachedMaxFreeQuotas) {
+        await handleMaxInteractionsReached(
+          ctx,
+          menfessDbData,
+          menfessUID,
+          menfessText,
+          action + "_plus",
+          userId
+        );
+        return;
+      }
+    }
+
+    const backKeyboard = new InlineKeyboard().text(
+      "<< Back",
+      `back_to_paste_link_handler_${channelChatId}`
+    );
+    await ctx.editMessageText("....");
+    const lastReply = await ctx.reply(waitingInteractionPlusMessage, {
+      reply_markup: backKeyboard,
+    });
+
+    ctx.session.route = "interaction_plus_mode";
+    userInInteractionPlusMode.set(ctx.from.id, {
+      action,
+      senderInfo: ctx.session.gender === "M" ? "🕺 #M" : "💃 #F",
+      messageShoudlDeleted: (lastReply as { message_id: number }).message_id,
+      menfessDbData,
+      menfessOnGroupText: sliceMenfessText(menfessText),
+      interactorUserName: userName,
+      menfessUID,
+      channelChatId: channelChatId || "",
+    });
   });
 
   bot.on("message:text", async (ctx, next) => {
@@ -317,6 +498,130 @@ export async function initPasteLinkHandler(bot: Bot<BotContext>) {
         reply_to_message_id: messageId,
         reply_markup: keyboard,
       });
+      ctx.session.dailyGoldQuota =
+        ctx.session.dailyGoldQuota - GoldRate.INTERACT;
+    } else if (
+      userInInteractionPlusMode.has(userId) &&
+      ctx.session.route === "interaction_plus_mode"
+    ) {
+      const {
+        action,
+        senderInfo,
+        messageShoudlDeleted,
+        menfessDbData,
+        menfessOnGroupText,
+        interactorUserName,
+        menfessUID,
+        channelChatId,
+      } = userInInteractionPlusMode.get(userId) || {
+        action: "",
+        senderInfo: "",
+        messageShoudlDeleted: undefined,
+        menfessDbData: {} as MenfessDbData,
+        interactorUserName: "",
+        menfessOnGroupText: "",
+        menfessUID: "",
+        channelChatId: "",
+      };
+
+      if (messageShoudlDeleted) {
+        await ctx.api.deleteMessage(ctx.chat.id, messageShoudlDeleted);
+      }
+
+      if (!isValidMessage(ctx.message.text, 15)) {
+        const backKeyboard = new InlineKeyboard().text(
+          "<< Back",
+          `back_to_paste_link_handler_${channelChatId}`
+        );
+        const lastReply = await ctx.reply(waitingInteractionPlusMessage, {
+          reply_markup: backKeyboard,
+        });
+
+        userInInteractionPlusMode.set(userId, {
+          action,
+          senderInfo,
+          messageShoudlDeleted: (lastReply as { message_id: number })
+            .message_id,
+          menfessDbData,
+          menfessOnGroupText,
+          interactorUserName,
+          menfessUID,
+          channelChatId,
+        });
+
+        return;
+      }
+
+      const channelUrl = `t.me/${botConfig.channelId.replace("@", "")}/${menfessDbData.channelChatId}`;
+      const isUseSenderFreeQuota =
+        ctx.session.dailyGoldQuota < GoldRate.INTERACT &&
+        menfessDbData.freeInteractQuota >= 1;
+
+      if (action === "hitme") {
+        const keyboard = new InlineKeyboard()
+          .text(
+            "🥂 Chat Me!",
+            `response_interact_chat_me_${menfessDbData.channelChatId}_${userId}`
+          )
+          .url("🕵️ Profile?", `tg://user?id=${userId}`)
+          .row()
+          .url("🔗 Menfess", channelUrl);
+
+        await ctx.api.sendMessage(
+          menfessDbData.senderId,
+          `💘💘💘\n\n` +
+            `✨ *Hallooo!* ✨\n\n` +
+            `🎉 Seseorang ${senderInfo} dengan username @${interactorUserName} 💫\n` +
+            "Sangat tertarik dengan menfess kamu dan memberikan pesannn buat kamuu 🥰\n\n" +
+            `📝 Menfess kamu:\n\n` +
+            `❝${menfessOnGroupText}...❞\n\n` +
+            "💌 Pesan: \n\n" +
+            `❝${ctx.message.text}❞\n\n` +
+            `💝 Cek profilnya di bawah ini! 👇`,
+          { reply_markup: keyboard }
+        );
+      } else if (action === "who") {
+        const keyboard = new InlineKeyboard()
+          .text(
+            "🫗 Spill Me!",
+            `response_interact_spill_me_${menfessDbData.channelChatId}_${userId}`
+          )
+          .url("🔗 Menfess", channelUrl)
+          .row();
+
+        await ctx.api.sendMessage(
+          menfessDbData.senderId,
+          `💝💝💝\n\n` +
+            `✨ *Heyy!* ✨\n\n` +
+            `🔍 Seseorang ${senderInfo} penasaran dan ingin mengetahui siapa yang mengirim menfess ini! 🤔\n\n` +
+            `📝 *Menfess kamu:*\n\n` +
+            `❝${menfessOnGroupText}...❞\n\n` +
+            "💌 Pesan: \n\n" +
+            `❝${ctx.message.text}❞\n\n` +
+            `💫 Apakah kamu ingin memberi tahu identitasmu? 👀`,
+          { reply_markup: keyboard }
+        );
+      } else if (action === "talk") {
+        await ctx.api.sendMessage(
+          menfessDbData.senderId,
+          `Someone wants to talk about this menfess! 💬\n\nYour post: ${menfessOnGroupText}`
+        );
+      }
+
+      await ctx.reply(
+        `Request ${getMenfessText(action + "_plus")} kamu telah disampaikan ke sender 💖`
+      );
+      await updateInteractUsers(
+        menfessUID,
+        userId,
+        action + "_plus",
+        isUseSenderFreeQuota
+      );
+      ctx.session.route = "idle";
+      userInInteractionPlusMode.delete(userId);
+      ctx.session.lastSentInteract = new Date();
+      ctx.session.dailyGoldQuota =
+        ctx.session.dailyGoldQuota - GoldRate.INTERACT;
     } else {
       await next();
     }

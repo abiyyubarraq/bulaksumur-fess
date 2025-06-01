@@ -28,6 +28,7 @@ const myData = (ctx: BotContext, userId: number) => {
   const emailRegistered = ctx.session.emailRegistered;
   const registeredAt = ctx.session.registeredAt;
   const premiumUntil = ctx.session.premiumUntil;
+  const dailyGoldQuota = ctx.session.dailyGoldQuota;
 
   return (
     `<blockquote>${bio}</blockquote>\n\n` +
@@ -39,7 +40,7 @@ const myData = (ctx: BotContext, userId: number) => {
     `🎓 Univ Year : ${univYear}\n` +
     `💌 Email : ${emailRegistered}\n` +
     // `⚡ Score : ${1000}\n` +
-    // `💰 Gold : ${2000}\n\n` +
+    `💰 Gold : ${dailyGoldQuota}\n\n` +
     `🆔 ID : ${userId}\n` +
     `⏱️ Join time : ${registeredAt ? moment(registeredAt).format("DD/MM/YYYY HH:mm") : "-"}\n\n` +
     `📅 Premium until : ${premiumUntil ? moment(premiumUntil).format("DD/MM/YYYY HH:mm") : "-"}\n\n`
@@ -107,6 +108,17 @@ export async function sendRulesMenu(ctx: BotContext) {
     parse_mode: "HTML",
   });
 }
+
+export async function sendBuyPremiumMenu(ctx: BotContext) {
+  const keyboard = new InlineKeyboard()
+    .text("💰 Premium 💎💎💎", "purchase_premium_member")
+    .row()
+    .text("« BACK", "back_to_main_menu");
+  await ctx.reply("Silahkan pilih apa yang ingin kamu beli 💹🤔", {
+    reply_markup: keyboard,
+  });
+}
+
 export async function sendHelpMenu(ctx: BotContext) {
   await ctx.reply(
     "Bulaksumur Menfess Bot Commands:\n\n" +

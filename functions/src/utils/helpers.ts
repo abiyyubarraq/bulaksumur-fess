@@ -199,6 +199,37 @@ export function isValidMessage(
   return true;
 }
 
+export function sliceMenfessText(message: string): string {
+  if (!message) return "";
+
+  // Find the position of gender emojis (🕺 or 💃)
+  const maleEmojiIndex = message.indexOf("🕺");
+  const femaleEmojiIndex = message.indexOf("💃");
+
+  // Determine where to cut the text
+  let cutIndex = -1;
+  if (maleEmojiIndex !== -1 && femaleEmojiIndex !== -1) {
+    cutIndex = Math.min(maleEmojiIndex, femaleEmojiIndex);
+  } else if (maleEmojiIndex !== -1) {
+    cutIndex = maleEmojiIndex;
+  } else if (femaleEmojiIndex !== -1) {
+    cutIndex = femaleEmojiIndex;
+  }
+
+  // If emoji is found, trim the message
+  let trimmedMessage = message;
+  if (cutIndex !== -1) {
+    trimmedMessage = message.substring(0, cutIndex).trim();
+  }
+
+  // Limit the main content to maximum 70 characters
+  if (trimmedMessage.length > 70) {
+    trimmedMessage = trimmedMessage.substring(0, 70).trim() + "...";
+  }
+
+  return trimmedMessage;
+}
+
 export function checkValidMessage(message: string): boolean {
   // Check for ASCII characters only
   const asciiRegex = /^[\x20-\x7E\n]+$/;
@@ -207,9 +238,23 @@ export function checkValidMessage(message: string): boolean {
   }
 
   // Check for URLs
-  const urlRegex = /(https?:\/\/[^\s]+)|(www\.[^\s]+)/gi;
-  if (urlRegex.test(message)) {
-    return false;
+  const channelLinkRegex = new RegExp(
+    `https://t\\.me/${botConfig.channelId.replace("@", "")}/\\d+$`
+  );
+  const groupLinkRegex = new RegExp(
+    `https://t\\.me/${botConfig.groupChatId.replace("@", "")}/\\d+$`
+  );
+  const channelCommentLinkRegex = new RegExp(
+    `https://t\\.me/${botConfig.channelId.replace("@", "")}/(\\d+)(\\?comment=(\\d+))?$`
+  );
+
+  if (message.match(/(https?:\/\/[^\s]+)|(www\.[^\s]+)/gi)) {
+    // If it contains URLs, only allow specific telegram links
+    return (
+      channelLinkRegex.test(message) ||
+      groupLinkRegex.test(message) ||
+      channelCommentLinkRegex.test(message)
+    );
   }
 
   // Check for username mentions (@username)

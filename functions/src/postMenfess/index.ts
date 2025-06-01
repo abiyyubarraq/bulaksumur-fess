@@ -512,7 +512,7 @@ export async function postToChannel(ctx: BotContext, hashTagUsed?: string) {
           createdAt: new Date(),
           interactUsers: [],
           senderAlias: ctx.session.anonName,
-          maxInteract: getMenfessMaxInteract(ctx.session.premiumStatus),
+          freeInteractQuota: getMenfessMaxInteract(ctx.session.premiumStatus),
         });
 
       await db

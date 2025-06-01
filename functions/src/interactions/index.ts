@@ -3,17 +3,73 @@ import { Bot, InlineKeyboard } from "grammy";
 import moment from "moment";
 import { botConfig } from "../utils/config";
 import { db } from "../utils/firebase";
-import { extractMenfessUID } from "../utils/helpers";
+import { extractMenfessUID, sliceMenfessText } from "../utils/helpers";
+import { GoldRate } from "../utils/premium.helpers";
 import type { BotContext, MenfessDbData } from "../utils/types";
 
-const getMenfessText = (type: string): string => {
+export const getMenfessText = (type: string): string => {
   const texts = {
     hitme: "👊 Hit Me!",
+    hitme_plus: "👊 Hit Me! ✚",
     who: "🕵️ Who?",
+    who_plus: "🕵️ Who? ✚",
     talk: "💬 Talk!",
+    talk_plus: "💬 Talk! ✚",
     report: "🚫 Report",
   };
   return texts[type as keyof typeof texts] || "";
+};
+
+export const updateInteractUsers = async (
+  menfessUID: string,
+  userId: number,
+  action: string,
+  isUseSenderFreeQuota: boolean
+) => {
+  await db
+    .collection("menfess")
+    .doc(menfessUID)
+    .update({
+      interactUsers: FieldValue.arrayUnion({
+        userId: userId,
+        action: getMenfessText(action),
+      }),
+      ...(isUseSenderFreeQuota && {
+        freeInteractQuota: FieldValue.increment(-1),
+      }),
+    });
+};
+
+export const handleMaxInteractionsReached = async (
+  ctx: BotContext,
+  menfessDbData: MenfessDbData,
+  menfessUID: string,
+  menfessText: string | undefined,
+  action: string,
+  userId: number
+) => {
+  const keyboard = new InlineKeyboard().url(
+    "🔗 Menfess",
+    `t.me/${botConfig.channelId.replace("@", "")}/${menfessDbData.channelChatId}`
+  );
+
+  await ctx.api.sendMessage(
+    menfessDbData.senderId,
+    `✨ *Hallooo!* ✨\n\n` +
+      `📝 Menfess kamu ini: \n` +
+      `❝${menfessText}...❞\n\n` +
+      `🎯 Mendapatkan interaksi sebanyak ${menfessDbData.interactUsers.length + 1}X:\n` +
+      menfessDbData.interactUsers.map((x) => x.action + "\n") +
+      getMenfessText(action) +
+      "\n" +
+      `\n😔 Namun sayang sekali free Kuota menerima Interaksi Kamu sudah habis.\n\n✨ Silahkan Upgrade Membership Kamu agar mendapatkan free Kuota Interaksi lebih banyak yaaa 🚀 ⭐️ 💫`,
+    {
+      reply_markup: keyboard,
+    }
+  );
+
+  await updateInteractUsers(menfessUID, userId, action, false);
+  ctx.session.lastSentInteract = new Date();
 };
 
 export async function postMenfessInteraction(
@@ -55,56 +111,6 @@ export async function postMenfessInteraction(
 }
 
 export function initInteractionHandlers(bot: Bot<BotContext>): void {
-  // Helper function to handle quota exceeded scenario
-  const handleMaxInteractionsReached = async (
-    ctx: BotContext,
-    menfessDbData: MenfessDbData,
-    menfessUID: string,
-    menfessText: string | undefined,
-    action: string,
-    userId: number
-  ) => {
-    const keyboard = new InlineKeyboard().url(
-      "🔗 Menfess",
-      `t.me/${botConfig.channelId.replace("@", "")}/${menfessDbData.channelChatId}`
-    );
-
-    await ctx.api.sendMessage(
-      menfessDbData.senderId,
-      `✨ *Hallooo!* ✨\n\n` +
-        `📝 Menfess kamu ini: \n` +
-        `❝${menfessText}❞\n\n` +
-        `🎯 Mendapatkan interaksi sebanyak ${menfessDbData.interactUsers.length + 1}X:\n` +
-        menfessDbData.interactUsers.map((x) => x.action + "\n") +
-        getMenfessText(action) +
-        "\n" +
-        `\n😔 Namun sayang sekali Kuota menerima Interaksi Kamu sudah habis.\n\n✨ Silahkan Upgrade Membership Kamu agar mendapatkan Kuota Interaksi lebih banyak yaaa 🚀 ⭐️ 💫`,
-      {
-        reply_markup: keyboard,
-      }
-    );
-
-    await updateInteractUsers(menfessUID, userId, action);
-    ctx.session.lastSentInteract = new Date();
-  };
-
-  // Helper function to update interact users in the database
-  const updateInteractUsers = async (
-    menfessUID: string,
-    userId: number,
-    action: string
-  ) => {
-    await db
-      .collection("menfess")
-      .doc(menfessUID)
-      .update({
-        interactUsers: FieldValue.arrayUnion({
-          userId: userId,
-          action: getMenfessText(action),
-        }),
-      });
-  };
-
   bot.callbackQuery(["hitme", "who", "talk", "report"], async (ctx) => {
     const action = ctx.callbackQuery.data;
     const userId = ctx.from?.id;
@@ -120,8 +126,13 @@ export function initInteractionHandlers(bot: Bot<BotContext>): void {
 
     const menfessOnGroup = ctx.callbackQuery.message?.reply_to_message;
     const menfessOnGroupId = menfessOnGroup?.message_id;
-    const menfessOnGroupText = menfessOnGroup?.text || menfessOnGroup?.caption;
-    const menfessUID = extractMenfessUID(menfessOnGroupText);
+    const menfessOnGroupText = sliceMenfessText(
+      menfessOnGroup?.text || menfessOnGroup?.caption || ""
+    );
+
+    const menfessUID = extractMenfessUID(
+      menfessOnGroup?.text || menfessOnGroup?.caption
+    );
 
     if (!menfessOnGroupId || !menfessUID) {
       await bot.api.answerCallbackQuery(ctx.callbackQuery.id, {
@@ -161,31 +172,63 @@ export function initInteractionHandlers(bot: Bot<BotContext>): void {
       return;
     }
 
-    if (moment().diff(ctx.session.lastSentInteract, "minutes") < 1) {
+    if (moment().diff(ctx.session.lastSentInteract, "seconds") < 20) {
       await bot.api.answerCallbackQuery(ctx.callbackQuery.id, {
         show_alert: true,
-        text: "Sabar ya, kamu baru saja mengirim interaksi sebelumnya. Tunggu 1 menit lagi ya!",
+        text: "Sabar ya, kamu baru saja mengirim interaksi sebelumnya. Tunggu 20 detik lagi ya!",
       });
       return;
     }
 
-    const hasReachedMaxInteractions =
-      menfessDbData.interactUsers.length >= menfessDbData.maxInteract;
+    if (action === "report") {
+      await db.collection(`users/${menfessDbData.senderId}/reports`).add({
+        reporterId: userId,
+        reporterUsername: userName?.toLowerCase() || "",
+        menfessUID: menfessUID,
+        menfessText: menfessOnGroupText,
+        userId: menfessDbData.senderId,
+        userName: menfessDbData.senderUserName.toLowerCase(),
+        menfessChannelChatId: menfessDbData.channelChatId,
+        menfessGroupChatId: menfessDbData.groupChatId,
+        createdAt: new Date(),
+        isFromMenfess: true,
+        isRead: false,
+      });
+      console.log(
+        `groupChatId: ${menfessOnGroupId} | menfessUID: ${menfessUID} | by userId: ${userId} | userName: ${userName} | Reporting menfess`
+      );
+      await ctx.answerCallbackQuery(
+        "Your report has been sent to the admin 🫡"
+      );
+      ctx.session.lastSentInteract = new Date();
+      return;
+    }
+
+    const hasReachedMaxFreeQuotas =
+      ctx.session.dailyGoldQuota < GoldRate.INTERACT &&
+      menfessDbData.freeInteractQuota < 1;
     const channelUrl = `t.me/${botConfig.channelId.replace("@", "")}/${menfessDbData.channelChatId}`;
+    const isUseSenderFreeQuota =
+      ctx.session.dailyGoldQuota < GoldRate.INTERACT &&
+      menfessDbData.freeInteractQuota >= 1;
+
+    if (hasReachedMaxFreeQuotas) {
+      await bot.api.answerCallbackQuery(ctx.callbackQuery.id, {
+        show_alert: true,
+        text: "💥 Ups! Goldmu tidak cukup dan menfess sudah kehabisan free kuota 🥲",
+      });
+      await handleMaxInteractionsReached(
+        ctx,
+        menfessDbData,
+        menfessUID,
+        menfessOnGroupText,
+        action,
+        userId
+      );
+      return;
+    }
 
     if (action === "hitme") {
-      if (hasReachedMaxInteractions) {
-        await handleMaxInteractionsReached(
-          ctx,
-          menfessDbData,
-          menfessUID,
-          menfessOnGroupText,
-          action,
-          userId
-        );
-        return;
-      }
-
       const keyboard = new InlineKeyboard()
         .text(
           "🥂 Chat Me!",
@@ -198,28 +241,13 @@ export function initInteractionHandlers(bot: Bot<BotContext>): void {
       await ctx.api.sendMessage(
         menfessDbData.senderId,
         `✨ *Hallooo!* ✨\n\n` +
-          `🎉 Seseorang dengan username @${userName} tertarik dengan menfess kamu! 💫\n\n` +
+          `🎉 Seseorang ${ctx.session.gender === "M" ? "🕺 #M" : "💃 #F"} dengan username @${userName} tertarik dengan menfess kamu! 💫\n\n` +
           `📝 Menfess kamu:\n\n` +
-          `❝${menfessOnGroupText}❞\n\n` +
+          `❝${menfessOnGroupText}...❞\n\n` +
           `💝 Cek profilnya di bawah ini! 👇`,
         { reply_markup: keyboard }
       );
-      await ctx.answerCallbackQuery(
-        "Request kamu telah disampaikan ke sender 💖"
-      );
     } else if (action === "who") {
-      if (hasReachedMaxInteractions) {
-        await handleMaxInteractionsReached(
-          ctx,
-          menfessDbData,
-          menfessUID,
-          menfessOnGroupText,
-          action,
-          userId
-        );
-        return;
-      }
-
       const keyboard = new InlineKeyboard()
         .text(
           "🫗 Spill Me!",
@@ -231,60 +259,28 @@ export function initInteractionHandlers(bot: Bot<BotContext>): void {
       await ctx.api.sendMessage(
         menfessDbData.senderId,
         `✨ *Heyy!* ✨\n\n` +
-          `🔍 Seseorang penasaran dan ingin mengetahui siapa yang mengirim menfess ini! 🤔\n\n` +
+          `🔍 Seseorang ${ctx.session.gender === "M" ? "🕺 #M" : "💃 #F"} penasaran dan ingin mengetahui siapa yang mengirim menfess ini! 🤔\n\n` +
           `📝 *Menfess kamu:*\n\n` +
-          `❝${menfessOnGroupText}❞\n\n` +
+          `❝${menfessOnGroupText}...❞\n\n` +
           `💫 Apakah kamu ingin memberi tahu identitasmu? 👀`,
         { reply_markup: keyboard }
       );
-      await ctx.answerCallbackQuery(
-        "Request kamu telah disampaikan ke sender 💖"
-      );
     } else if (action === "talk") {
-      if (hasReachedMaxInteractions) {
-        await handleMaxInteractionsReached(
-          ctx,
-          menfessDbData,
-          menfessUID,
-          menfessOnGroupText,
-          action,
-          userId
-        );
-        return;
-      }
-
       await ctx.api.sendMessage(
         menfessDbData.senderId,
         `Someone wants to talk about this menfess! 💬\n\nYour post: ${menfessOnGroupText}`
       );
-      await ctx.answerCallbackQuery(
-        "Request kamu telah disampaikan ke sender 💖"
-      );
-    } else if (action === "report") {
-      await db.collection(`users/${menfessDbData.senderId}/reports`).add({
-        reporterId: userId,
-        reporterUsername: userName?.toLowerCase() || "",
-        menfessUID: menfessUID,
-        menfessText: menfessOnGroupText?.slice(0, -24),
-        userId: menfessDbData.senderId,
-        userName: menfessDbData.senderUserName.toLowerCase(),
-        menfessChannelChatId: menfessDbData.channelChatId,
-        menfessGroupChatId: menfessDbData.groupChatId,
-        createdAt: new Date(),
-        isFromMenfess: true,
-        isRead: false,
-      });
-      await ctx.answerCallbackQuery(
-        "Your report has been sent to the admin 🫡"
-      );
     }
 
-    console.log(
-      `groupChatId: ${menfessOnGroupId} | menfessUID: ${menfessUID} | by userId: ${userId} | userName: ${userName} | Interaction executed: ${action}`
+    await ctx.answerCallbackQuery(
+      "Request kamu telah disampaikan ke sender 💖"
     );
 
-    await updateInteractUsers(menfessUID, userId, action);
+    await updateInteractUsers(menfessUID, userId, action, isUseSenderFreeQuota);
     ctx.session.lastSentInteract = new Date();
+    if (!isUseSenderFreeQuota)
+      ctx.session.dailyGoldQuota =
+        ctx.session.dailyGoldQuota - GoldRate.INTERACT;
   });
 
   const handleInteractionResponse = async (ctx: BotContext, type: string) => {

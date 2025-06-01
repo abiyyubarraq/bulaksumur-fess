@@ -1,5 +1,6 @@
 import { apiThrottler } from "@grammyjs/transformer-throttler";
-import { Bot, session } from "grammy";
+import { Bot, Context, session } from "grammy";
+import { initBuyPremium } from "../buyPremium";
 import { initInteractionHandlers } from "../interactions";
 import { initPasteLinkHandler } from "../pasteLinkHandler";
 import { initPostHandlers } from "../postMenfess";
@@ -49,9 +50,15 @@ export function createBot(): Bot<BotContext> {
       isShowFaculty: true,
       isShowAge: true,
       age: null,
+      dailyGoldQuota: 0, // adjust this to 300 (default value) on deployment
     };
   }
-  bot.use(session({ initial }));
+  function getSessionKey(ctx: Context): string | undefined {
+    // Give every user their personal session storage
+    // (will be shared across groups and in their private chat)
+    return ctx.from?.id.toString();
+  }
+  bot.use(session({ initial, getSessionKey }));
   bot.api.config.use(apiThrottler());
 
   bot.api.setMyCommands([
@@ -78,6 +85,7 @@ export function createBot(): Bot<BotContext> {
   initSendFeedbackHandlers(bot);
   initViewUserProfile(bot);
   initViewMyProfile(bot);
+  initBuyPremium(bot);
   bot.catch((err) => {
     console.error("Bot error occurred:", err);
   });
