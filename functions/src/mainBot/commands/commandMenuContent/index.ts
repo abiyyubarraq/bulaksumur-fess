@@ -205,13 +205,10 @@ export async function sendViewProfileMenu(ctx: BotContext) {
     // .text("🚫 Block", `user_${userId}_block_${userDbData.userId}_${userDbData.username}`)
     .text(
       "📩 Anon Message",
-      `user_${userId}_send_anon_to_${userDbData.userId}_${userDbData.username}`
+      `anon_mess_${userDbData.userId}_${userDbData.username}_true_false`
     )
     .row()
-    .text(
-      "⚠️ Report",
-      `user_${userId}_report_${userDbData.userId}_${userDbData.username}`
-    )
+    .text("⚠️ Report", `user_report_${userDbData.userId}_${userDbData.username}`)
     .url("👤 PROFILE", `tg://user?id=${userDbData.userId}`);
 
   // Format profile display text with dividers for better readability

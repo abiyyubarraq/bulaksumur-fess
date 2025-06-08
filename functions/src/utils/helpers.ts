@@ -296,10 +296,16 @@ export function isChatFromUserToGroup(ctx: BotContext): boolean {
       ctx.update?.message?.chat?.id === Number(botConfig.groupChatIdNumber)
   );
 }
+
+export function getGenderEmoji(gender: string | null): string {
+  if (!gender) return "";
+  return gender === "M" ? "#🕺" : "#💃";
+}
+
 export function getFooterMessage(session: SessionData): string {
   return (
     "\n\n" +
-    (session.gender === "M" ? "🕺 #M" : "💃 #F") +
+    getGenderEmoji(session.gender) +
     getAge(session) +
     `${session.isShowDiamond ? getPremiumBadge(session.premiumStatus) : ""}` +
     `${session.isShowFaculty ? "\n" + "🏫 " + session.faculty : ""}`

@@ -165,6 +165,9 @@ export function initPostHandlers(bot: Bot<BotContext>): void {
         (ctx.session.isShowAge
           ? `\n👤Tampilkan Umur: ✅`
           : `\n👤Tampilkan Umur: ❌`) +
+        (ctx.session.isMenfessLocked
+          ? `\n\nⓂ️Kunci Menfess: ✅`
+          : `\n\nⓂ️Kunci Menfess: ❌`) +
         `\n\n<i>🔍 Hashtag yang digunakan: ${currentState?.hashTagUsed ? currentState?.hashTagUsed : "-"}</i>`,
       {
         reply_markup: keyboard,
@@ -513,6 +516,7 @@ export async function postToChannel(ctx: BotContext, hashTagUsed?: string) {
           interactUsers: [],
           senderAlias: ctx.session.anonName,
           freeInteractQuota: getMenfessMaxInteract(ctx.session.premiumStatus),
+          isMenfessLocked: ctx.session.isMenfessLocked,
         });
 
       await db

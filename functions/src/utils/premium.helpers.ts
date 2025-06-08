@@ -25,7 +25,7 @@ export function getDailyGoldQuota(premiumStatus: number | null): number {
 }
 
 export enum GoldRate {
-  INTERACT = 110,
-  ANON_REPLY = 55,
-  ANON_MESSAGE = 110,
+  INTERACT = 105,
+  ANON_REPLY = 60,
+  ANON_MESSAGE = 105,
 }

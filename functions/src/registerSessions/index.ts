@@ -51,9 +51,9 @@ const loadUserDataIntoSession = async (
         userData.registerStep
       )
     ) {
-      if (username !== userData.username) {
+      if (username.toLowerCase() !== userData.username) {
         await db.collection("users").doc(userId.toString()).update({
-          username: username,
+          username: username.toLowerCase(),
         });
       }
 
@@ -79,6 +79,7 @@ const loadUserDataIntoSession = async (
         moment(new Date(userData.birthYear, userData.birthMonth - 1, 1)),
         "years"
       );
+      //   ctx.session.dailyGoldQuota = userData.dailyGoldQuota; // should to adjusted, dont put it here
       return true;
     }
   }

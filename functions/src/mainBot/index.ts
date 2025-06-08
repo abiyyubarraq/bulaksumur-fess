@@ -50,7 +50,8 @@ export function createBot(): Bot<BotContext> {
       isShowFaculty: true,
       isShowAge: true,
       age: null,
-      dailyGoldQuota: 0, // adjust this to 300 (default value) on deployment
+      dailyGoldQuota: 300,
+      isMenfessLocked: false,
     };
   }
   function getSessionKey(ctx: Context): string | undefined {

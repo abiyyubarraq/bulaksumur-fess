@@ -164,7 +164,10 @@ export function initInteractionHandlers(bot: Bot<BotContext>): void {
       return;
     }
 
-    if (menfessDbData.interactUsers.some((user) => user.userId === userId)) {
+    if (
+      menfessDbData.interactUsers.some((user) => user.userId === userId) &&
+      ctx.session.premiumStatus !== 3
+    ) {
       await bot.api.answerCallbackQuery(ctx.callbackQuery.id, {
         show_alert: true,
         text: "🎪 Kamu sudah berinteraksi dengan menfess ini sebelumnya 🎭",

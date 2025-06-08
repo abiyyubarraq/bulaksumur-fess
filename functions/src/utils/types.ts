@@ -62,6 +62,7 @@ export interface SessionData {
   isShowAge: boolean;
   age: number | null;
   dailyGoldQuota: number;
+  isMenfessLocked: boolean;
 }
 
 export type BotContext = Context & SessionFlavor<SessionData>;
@@ -138,6 +139,7 @@ export interface UserDbData {
   agreementSignAt: Timestamp | null;
   deletedCount: number | null;
   warnedCount: number | null;
+  dailyGoldQuota: number;
 }
 
 export interface MenfessDbData {
@@ -150,6 +152,7 @@ export interface MenfessDbData {
   interactUsers: { userId: number; action: string }[];
   groupChatButtonId: number;
   freeInteractQuota: number;
+  isMenfessLocked: boolean;
 }
 
 export interface MenfessReportDbData {
@@ -160,4 +163,13 @@ export interface MenfessReportDbData {
   menfessSenderId: number;
   menfessSenderUsername: string;
   createdAt: Timestamp;
+}
+
+export interface AnonReplyDbData {
+  senderId: number;
+  senderUsername: string;
+  groupChatId: number;
+  replyToMessageId: number;
+  createdAt: Timestamp;
+  messagePreview: string;
 }

@@ -13,7 +13,11 @@ import {
   sliceMenfessText,
 } from "../utils/helpers";
 import { GoldRate } from "../utils/premium.helpers";
-import type { BotContext, MenfessDbData } from "../utils/types";
+import type {
+  AnonReplyDbData,
+  BotContext,
+  MenfessDbData,
+} from "../utils/types";
 
 const userInAnonReplyMode = new Map<
   number,
@@ -93,8 +97,24 @@ const sendReplyWithKeyboard = async (
       .row()
       .text("🥷 Anon Reply", `${callbackPrefix}${sourceId}`);
   } else {
-    keyboard.text("🥷 Anon Reply", `${callbackPrefix}${sourceId}`);
-    // .text("‼️Report", `report_menfess_${isChannel ? "channel" : "group"}_${sourceId}`)
+    const anonReplyDbData = await db
+      .collection("anonReply")
+      .doc(String(targetId))
+      .get()
+      .then((doc) => doc.data() as AnonReplyDbData | undefined);
+
+    if (anonReplyDbData) {
+      keyboard
+        .text("🥷 Anon Reply", `${callbackPrefix}${sourceId}`)
+        .text(
+          "📨 Anon Message",
+          `anon_mess_${anonReplyDbData.senderId}_${anonReplyDbData.senderUsername}_false_true_${anonReplyDbData.messagePreview?.slice(0, 15) || ""}`
+        )
+        .row();
+    } else {
+      keyboard.text("🥷 Anon Reply", `${callbackPrefix}${sourceId}`);
+      // .text("‼️Report", `report_menfess_${isChannel ? "channel" : "group"}_${sourceId}`)
+    }
   }
 
   await ctx.api.copyMessage(
@@ -104,6 +124,7 @@ const sendReplyWithKeyboard = async (
     {
       reply_markup: keyboard,
       reply_to_message_id: messageId,
+      parse_mode: "HTML",
     }
   );
 };
@@ -210,8 +231,9 @@ const handleValidationErrors = async (
 
 export async function initPasteLinkHandler(bot: Bot<BotContext>) {
   bot.callbackQuery(/^send_anon_reply_to_channel_(\d+)$/, async (ctx) => {
-    if (ctx.session.dailyGoldQuota < GoldRate.INTERACT) {
-      await ctx.answerCallbackQuery(
+    if (ctx.session.dailyGoldQuota < GoldRate.ANON_REPLY) {
+      await ctx.editMessageText("...");
+      await ctx.reply(
         "Gold kamu tidak mencukupi ☹️ Silakan upgrade ke premium member untuk mendapat gold lebih banyak 💸."
       );
       return;
@@ -248,6 +270,14 @@ export async function initPasteLinkHandler(bot: Bot<BotContext>) {
       await ctx.reply("❌ Pesan tidak ditemukan");
       return;
     }
+
+    if (menfessDbData.isMenfessLocked) {
+      await ctx.editMessageText("...");
+      await ctx.reply(
+        "🔒 Menfess ini dikunci oleh sender, kamu tidak bisa mengirim reply anonim"
+      );
+      return;
+    }
     const cancelKeyboard = new InlineKeyboard().text(
       "✖️ Cancel",
       "cancel_anon_reply"
@@ -267,13 +297,16 @@ export async function initPasteLinkHandler(bot: Bot<BotContext>) {
   });
 
   bot.callbackQuery(/^send_anon_reply_to_group_(\d+)$/, async (ctx) => {
-    if (ctx.session.dailyGoldQuota < GoldRate.INTERACT) {
-      await ctx.answerCallbackQuery(
+    if (ctx.session.dailyGoldQuota < GoldRate.ANON_REPLY) {
+      await ctx.editMessageText("...");
+      await ctx.reply(
         "Gold kamu tidak mencukupi ☹️ Silakan upgrade ke premium member untuk mendapat gold lebih banyak 💸."
       );
       return;
     }
     const groupChatId = ctx.match[1];
+    const menfessText = ctx.update.callback_query?.message?.text;
+    const menfessUID = extractMenfessUID(menfessText);
 
     if (
       !(await handleValidationErrors(
@@ -284,6 +317,21 @@ export async function initPasteLinkHandler(bot: Bot<BotContext>) {
       ))
     ) {
       return;
+    }
+
+    if (menfessUID) {
+      const menfessDbData = await db
+        .collection("menfess")
+        .doc(menfessUID)
+        .get()
+        .then((doc) => doc.data() as MenfessDbData);
+      if (menfessDbData.isMenfessLocked) {
+        await ctx.editMessageText("...");
+        await ctx.reply(
+          "🔒 Menfess ini dikunci oleh sender, kamu tidak bisa mengirim reply anonim"
+        );
+        return;
+      }
     }
     const cancelKeyboard = new InlineKeyboard().text(
       "✖️ Cancel",
@@ -357,10 +405,8 @@ export async function initPasteLinkHandler(bot: Bot<BotContext>) {
     }
 
     if (!menfessUID || !menfessText) {
-      await bot.api.answerCallbackQuery(ctx.callbackQuery.id, {
-        show_alert: true,
-        text: "🌪️ Waduh! Pesan aslinya tidak dapat ditemukan nih 🍃",
-      });
+      await ctx.editMessageText("...");
+      await ctx.reply("🌪️ Waduh! Pesan aslinya tidak dapat ditemukan nih 🍃");
       return;
     }
 
@@ -371,26 +417,27 @@ export async function initPasteLinkHandler(bot: Bot<BotContext>) {
       .then((doc) => doc.data() as MenfessDbData | undefined);
 
     if (!menfessDbData) {
-      await bot.api.answerCallbackQuery(ctx.callbackQuery.id, {
-        show_alert: true,
-        text: "🎪 Ups! Pesan aslinya tidak dapat ditemukan nih 🎭",
-      });
+      await ctx.editMessageText("...");
+      await ctx.reply("🎪 Ups! Pesan aslinya tidak dapat ditemukan nih 🎭");
       return;
     }
 
     if (menfessDbData.senderId === userId) {
-      await bot.api.answerCallbackQuery(ctx.callbackQuery.id, {
-        show_alert: true,
-        text: "🎪 Ehh.. Kamu tidak bisa berinteraksi dengan menfess kamu sendiri 🎭",
-      });
+      await ctx.editMessageText("...");
+      await ctx.reply(
+        "🎪 Ehh.. Kamu tidak bisa berinteraksi dengan menfess kamu sendiri 🎭"
+      );
       return;
     }
 
-    if (menfessDbData.interactUsers.some((user) => user.userId === userId)) {
-      await bot.api.answerCallbackQuery(ctx.callbackQuery.id, {
-        show_alert: true,
-        text: "🎪 Kamu sudah berinteraksi dengan menfess ini sebelumnya 🎭",
-      });
+    if (
+      menfessDbData.interactUsers.some((user) => user.userId === userId) &&
+      ctx.session.premiumStatus !== 3
+    ) {
+      await ctx.editMessageText("...");
+      await ctx.reply(
+        "🎪 Kamu sudah berinteraksi dengan menfess ini sebelumnya 🎭"
+      );
       return;
     }
     const hasReachedMaxFreeQuotas =
@@ -398,10 +445,10 @@ export async function initPasteLinkHandler(bot: Bot<BotContext>) {
       menfessDbData.freeInteractQuota < 1;
 
     if (hasReachedMaxFreeQuotas) {
-      await bot.api.answerCallbackQuery(ctx.callbackQuery.id, {
-        show_alert: true,
-        text: "💥 Ups! Goldmu tidak cukup dan menfess sudah kehabisan free kuota 🥲",
-      });
+      await ctx.editMessageText("...");
+      await ctx.reply(
+        "💥 Ups! Goldmu tidak cukup dan menfess sudah kehabisan free kuota 🥲"
+      );
 
       if (hasReachedMaxFreeQuotas) {
         await handleMaxInteractionsReached(
@@ -479,7 +526,6 @@ export async function initPasteLinkHandler(bot: Bot<BotContext>) {
       }
 
       const messageId = ctx.message?.message_id;
-
       const sentMessage = await ctx.api.sendMessage(
         botConfig.groupChatId,
         `${ctx.message.text}${senderInfo}`,
@@ -491,6 +537,18 @@ export async function initPasteLinkHandler(bot: Bot<BotContext>) {
       ctx.session.route = "idle";
       userInAnonReplyMode.delete(userId);
 
+      await db
+        .collection("anonReply")
+        .doc(String(sentMessage.message_id))
+        .set({
+          senderId: userId,
+          senderUsername: ctx.from?.username?.toLowerCase(),
+          groupChatId: sentMessage.message_id,
+          replyToMessageId: groupChatId,
+          createdAt: new Date(),
+          messagePreview: ctx.message.text.slice(0, 15),
+        });
+
       const link = `https://t.me/${botConfig.groupChatId.replace("@", "")}/${sentMessage.message_id}`;
 
       const keyboard = new InlineKeyboard().url("🔗Link", link);
@@ -499,7 +557,7 @@ export async function initPasteLinkHandler(bot: Bot<BotContext>) {
         reply_markup: keyboard,
       });
       ctx.session.dailyGoldQuota =
-        ctx.session.dailyGoldQuota - GoldRate.INTERACT;
+        ctx.session.dailyGoldQuota - GoldRate.ANON_REPLY;
     } else if (
       userInInteractionPlusMode.has(userId) &&
       ctx.session.route === "interaction_plus_mode"

@@ -19,7 +19,7 @@ const buyPremiumText = `Silahkan pilih jenis membership yang ingin kamu beli:
 - <code>90x Free Interaksi/Menfess*</code>
 - <code>Bisa Melakukan Interaksi✚</code>
 - <code>Bisa mengunci menfess dari anon reply</code>
-- <codeMulti Interaksi</code>
+- <code>Multi Interaksi</code>
 
 Untuk penjelasan lebih lanjut tentang keuntungan menjadi Premium Membership, bisa Kamu baca di Menu - Bantuan - Premium Membership.
 
