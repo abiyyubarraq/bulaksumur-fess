@@ -6,7 +6,7 @@ import type { BotContext } from "../utils/types";
 export const anonGuideText =
   "💡 Kirim /menu untuk memunculkan Menu Anonymous Chat.\n" +
   //   "💡 Reply pesanmu dengan /unsend untuk menghapus (hanya untuk pesan yg belum dibaca).\n" +
-  "💡 Reveal Us 🤝🏻 dan Move to Inbox 📩 akan aktif di Menu Anonymous Chat dengan minimal bertukar 16 pesan.\n" +
+  "💡 Reveal Us 🤝🏻 akan aktif di Menu Anonymous Chat dengan minimal bertukar 16 pesan.\n" +
   "💡 Pesan yang dikirim akan dihapus otomatis ketika « back atau lebih dari 6 jam.\n" +
   "💡 Pesan yang dikirim tidak bisa ditangkap layar atau diunduh oleh lawan.\n" +
   "💡 Kamu bisa mengirim pesan berupa text, photo, video, voice & location/live location.\n" +
@@ -15,7 +15,9 @@ export const anonGuideText =
   //   "💡 Kamu bisa pin/sematkan pesanmu, BOT akan menyematkan juga pesan tersebut di lawan bicaramu (pastikan pin/sematkan juga untuk BOT). Fitur pin/sematkan ini akan mengirim ulang pesan dan pin ulang pesan tersebut jika lawan bicaramu keluar masuk room chat, hanya bisa 1 pin/sematan, pin/sematkan pesan baru akan menggantikan yang lama.\n" +
   //   "💡 Reply pesanmu dengan /unpin untuk menghilangkan sematan.\n\n" +
   "‼️ Jangan pernah bertukar username selain lewat Reveal Us 🤝🏻, takut kamu kena tipu :(";
+
 const chatObject: { [anonChatId: string]: number[] } = {};
+
 export function initAnonChatHandlers(bot: Bot<BotContext>): void {
   bot.on("message:entities:bot_command", async (ctx, next) => {
     if (!ctx.session.route?.match(/^anonChat_[^_]+_\d+$/)) {

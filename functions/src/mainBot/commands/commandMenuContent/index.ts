@@ -57,7 +57,7 @@ export async function sendMainMenu(ctx: BotContext, isBack: boolean = false) {
     .text("Kritik, Saran, Lapor 🗞️", "report_feedback")
     .row()
     .text("Profile 👤", "view_my_profile")
-    .text("Inbox 📬", "view_inbox")
+    // .text("Inbox 📬", "view_inbox")
     .row()
     // .text("Riwayat 🌟", "view_history")
     .text("Beli 🛒", "purchase_premium")

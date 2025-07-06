@@ -181,10 +181,10 @@ export function initInteractionHandlers(bot: Bot<BotContext>): void {
       return;
     }
 
-    if (moment().diff(ctx.session.lastSentInteract, "seconds") < 20) {
+    if (moment().diff(ctx.session.lastSentInteract, "seconds") < 10) {
       await bot.api.answerCallbackQuery(ctx.callbackQuery.id, {
         show_alert: true,
-        text: "Sabar ya, kamu baru saja mengirim interaksi sebelumnya. Tunggu 20 detik lagi ya!",
+        text: "Sabar ya, kamu baru saja mengirim interaksi sebelumnya. Tunggu 10 detik lagi ya!",
       });
       return;
     }

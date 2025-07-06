@@ -138,7 +138,11 @@ export function initSessionModule(bot: Bot<BotContext>): void {
       return;
     }
 
-    if (!ctx.session.isRegistered || !ctx.session.lastUserUpdatedDataWithDb) {
+    if (
+      !ctx.session.isRegistered ||
+      !ctx.session.lastUserUpdatedDataWithDb ||
+      moment().diff(ctx.session.lastUserUpdatedDataWithDb, "hours") > 6
+    ) {
       if (await checkUserBanned(ctx, userId)) {
         await ctx.answerCallbackQuery(
           "❌ Maaf, kamu tidak diizinkan berinteraksi dengan bot ini. 🚫"
@@ -193,6 +197,47 @@ export function initSessionModule(bot: Bot<BotContext>): void {
         await next();
         return;
       } else {
+        const userId = ctx.from?.id;
+
+        if (
+          userId === botConfig.groupAccId ||
+          userId === botConfig.channelAccId
+        )
+          return;
+        if (
+          !userId ||
+          !ctx.session.isRegistered ||
+          ctx.session.isBanned ||
+          ctx.session.registerStep !== "complete" ||
+          !(await verifyChannelMembership(ctx, userId))
+        ) {
+          const messageId = ctx.message?.message_id;
+          if (messageId) {
+            const botReply = await ctx.reply(
+              "⚠️ <b>Pesan tidak dapat diproses</b> ❌\n\n" +
+                "📝 Kemungkinan penyebab:\n" +
+                "• Belum menjadi member base 👥\n" +
+                "• Belum melakukan pendaftaran ✍️\n" +
+                "• Belum menyetujui peraturan & ketentuan base 📜\n" +
+                "• Belum join ke channel 🔔\n\n" +
+                "🙉 Jika kamu yakin sudah melakukan semua hal di atas, silahkan berinteraksi dengan bot terlebih dahulu.\n\n" +
+                "⏳ Pesan ini akan dihapus dalam <b>5 detik</b>",
+              {
+                reply_to_message_id: messageId,
+                parse_mode: "HTML",
+              }
+            );
+            setTimeout(async () => {
+              try {
+                await ctx.api.deleteMessage(ctx.chat.id, messageId);
+                await ctx.api.deleteMessage(ctx.chat.id, botReply.message_id);
+              } catch (error) {
+                console.error("Error deleting messages:", error);
+              }
+            }, 5000);
+          }
+          return;
+        }
         return;
       }
     }
@@ -237,7 +282,11 @@ export function initSessionModule(bot: Bot<BotContext>): void {
       return;
     }
 
-    if (!ctx.session.isRegistered || !ctx.session.lastUserUpdatedDataWithDb) {
+    if (
+      !ctx.session.isRegistered ||
+      !ctx.session.lastUserUpdatedDataWithDb ||
+      moment().diff(ctx.session.lastUserUpdatedDataWithDb, "hours") > 6
+    ) {
       if (await checkUserBanned(ctx, userId)) {
         await ctx.reply("❌ Maaf, kamu tidak diizinkan mengirim menfess. 🚫");
         return;

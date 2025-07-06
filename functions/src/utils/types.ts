@@ -102,6 +102,8 @@ export interface BotConfig {
   adminBaseUserName: string;
   moderatorBaseUserName: string;
   botChatIdNumber: number;
+  groupAccId: number;
+  channelAccId: number;
 }
 
 export interface UserDbData {

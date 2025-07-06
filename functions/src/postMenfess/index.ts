@@ -14,7 +14,7 @@ import {
   isForwardedMenfessFromChannelToGroup,
   isValidMessage,
 } from "../utils/helpers";
-import { getMenfessMaxInteract } from "../utils/premium.helpers";
+import { GoldRate, getMenfessMaxInteract } from "../utils/premium.helpers";
 import {
   type BotContext,
   type ListenMenfessState,
@@ -293,6 +293,7 @@ export function initPostHandlers(bot: Bot<BotContext>): void {
       }
     );
     ctx.session.lastPostMenfess = new Date();
+    ctx.session.dailyGoldQuota -= GoldRate.SEND_MENFESS;
   });
 
   bot.callbackQuery(/^unsent_menfess_(.+)$/, async (ctx) => {
@@ -407,12 +408,20 @@ export function initPostHandlers(bot: Bot<BotContext>): void {
  * @param ctx Bot context
  */
 export async function startPostMenfessListener(ctx: BotContext): Promise<void> {
+  if (ctx.session.dailyGoldQuota < GoldRate.SEND_MENFESS) {
+    await ctx.editMessageText("...");
+    await ctx.reply(
+      "Gold kamu tidak mencukupi ☹️ Silakan upgrade ke premium member untuk mendapat gold lebih banyak 💸."
+    );
+    return;
+  }
+
   if (
     ctx.session.lastPostMenfess &&
-    moment(ctx.session.lastPostMenfess).isAfter(moment().subtract(5, "minutes"))
+    moment(ctx.session.lastPostMenfess).isAfter(moment().subtract(1, "minutes"))
   ) {
     await ctx.deleteMessage();
-    await ctx.reply("Kamu hanya bisa mengirim menfess sekali dalam 5 menit.");
+    await ctx.reply("Kamu hanya bisa mengirim menfess sekali dalam 1 menit.");
     return;
   }
 
@@ -455,7 +464,7 @@ export async function postToChannel(ctx: BotContext, hashTagUsed?: string) {
   }
 
   const userName = ctx.from?.username;
-  const menfessUID = generateUID(20);
+  const menfessUID = generateUID();
   const menfessFooter = `${getFooterMessage(ctx.session)} \n\n!$${menfessUID}`;
 
   try {

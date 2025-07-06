@@ -25,6 +25,10 @@ export const botConfig: BotConfig = {
     : 0,
   adminBaseUserName: process.env.ADMIN_BASE || "crtyptockl",
   moderatorBaseUserName: process.env.MODERATOR_BASE || "crtyptockl",
+  groupAccId: process.env.GROUP_ACC_ID ? Number(process.env.GROUP_ACC_ID) : 0,
+  channelAccId: process.env.CHANNEL_ACC_ID
+    ? Number(process.env.CHANNEL_ACC_ID)
+    : 0,
 };
 
 // Validate config
