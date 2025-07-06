@@ -273,6 +273,6 @@
   ],
   "files": {
     "ignoreUnknown": true,
-    "ignore": ["**/build", "**/functions", "**/node_modules"]
+    "ignore": ["**/build", "**/node_modules"]
   }
 }
