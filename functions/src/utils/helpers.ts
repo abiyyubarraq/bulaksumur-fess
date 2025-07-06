@@ -299,24 +299,27 @@ export function isChatFromUserToGroup(ctx: BotContext): boolean {
 
 export function getGenderEmoji(gender: string | null): string {
   if (!gender) return "";
-  return gender === "M" ? "#🕺" : "#💃";
+  return gender === "M" ? "🕺#M" : "💃#F";
 }
 
 export function getFooterMessage(session: SessionData): string {
   return (
     "\n\n" +
-    getGenderEmoji(session.gender) +
-    getAge(session) +
+    getAgeAndGender(session) +
     `${session.isShowDiamond ? getPremiumBadge(session.premiumStatus) : ""}` +
     `${session.isShowFaculty ? "\n" + "🏫 " + session.faculty : ""}`
   );
 }
 
 export function getAge(session: SessionData): string {
-  if (!session.age) return "⁕";
+  if (!session.age) return "-";
   return session.isShowAge
     ? session.age.toString()
     : session.age <= 25
       ? "✘✘"
       : "⁕⁕";
+}
+
+export function getAgeAndGender(session: SessionData): string {
+  return getGenderEmoji(session.gender) + getAge(session);
 }

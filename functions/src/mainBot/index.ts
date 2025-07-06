@@ -1,5 +1,6 @@
 import { apiThrottler } from "@grammyjs/transformer-throttler";
 import { Bot, Context, session } from "grammy";
+import { initAnonChatHandlers } from "../anonChat";
 import { initBuyPremium } from "../buyPremium";
 import { initInteractionHandlers } from "../interactions";
 import { initPasteLinkHandler } from "../pasteLinkHandler";
@@ -52,6 +53,9 @@ export function createBot(): Bot<BotContext> {
       age: null,
       dailyGoldQuota: 300,
       isMenfessLocked: false,
+      startAnonChatAt: null,
+      messageIdOnOtherUserSent: [],
+      myMessageIdOnOtherUserSent: [],
     };
   }
   function getSessionKey(ctx: Context): string | undefined {
@@ -78,6 +82,7 @@ export function createBot(): Bot<BotContext> {
   ]);
 
   initSessionModule(bot);
+  initAnonChatHandlers(bot);
   initTosMenu(bot);
   initCommands(bot);
   initPostHandlers(bot);

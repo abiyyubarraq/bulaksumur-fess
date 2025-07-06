@@ -63,6 +63,9 @@ export interface SessionData {
   age: number | null;
   dailyGoldQuota: number;
   isMenfessLocked: boolean;
+  startAnonChatAt: Date | null;
+  messageIdOnOtherUserSent: number[];
+  myMessageIdOnOtherUserSent: number[];
 }
 
 export type BotContext = Context & SessionFlavor<SessionData>;

@@ -8,6 +8,7 @@ import { botConfig } from "../utils/config";
 import { db } from "../utils/firebase";
 import {
   extractMenfessUID,
+  getAgeAndGender,
   getFooterMessage,
   isValidMessage,
   sliceMenfessText,
@@ -475,7 +476,7 @@ export async function initPasteLinkHandler(bot: Bot<BotContext>) {
     ctx.session.route = "interaction_plus_mode";
     userInInteractionPlusMode.set(ctx.from.id, {
       action,
-      senderInfo: ctx.session.gender === "M" ? "🕺 #M" : "💃 #F",
+      senderInfo: getAgeAndGender(ctx.session),
       messageShoudlDeleted: (lastReply as { message_id: number }).message_id,
       menfessDbData,
       menfessOnGroupText: sliceMenfessText(menfessText),
@@ -619,7 +620,7 @@ export async function initPasteLinkHandler(bot: Bot<BotContext>) {
         const keyboard = new InlineKeyboard()
           .text(
             "🥂 Chat Me!",
-            `response_interact_chat_me_${menfessDbData.channelChatId}_${userId}`
+            `interact_chat_me_${menfessDbData.channelChatId}_${userId}`
           )
           .url("🕵️ Profile?", `tg://user?id=${userId}`)
           .row()
@@ -629,10 +630,11 @@ export async function initPasteLinkHandler(bot: Bot<BotContext>) {
           menfessDbData.senderId,
           `💘💘💘\n\n` +
             `✨ *Hallooo!* ✨\n\n` +
-            `🎉 Seseorang ${senderInfo} dengan username @${interactorUserName} 💫\n` +
+            `🎉 Seorang ${senderInfo}\n` +
+            `dengan username @${interactorUserName} 💫\n` +
             "Sangat tertarik dengan menfess kamu dan memberikan pesannn buat kamuu 🥰\n\n" +
             `📝 Menfess kamu:\n\n` +
-            `❝${menfessOnGroupText}...❞\n\n` +
+            `❝${menfessOnGroupText}❞\n\n` +
             "💌 Pesan: \n\n" +
             `❝${ctx.message.text}❞\n\n` +
             `💝 Cek profilnya di bawah ini! 👇`,
@@ -642,7 +644,7 @@ export async function initPasteLinkHandler(bot: Bot<BotContext>) {
         const keyboard = new InlineKeyboard()
           .text(
             "🫗 Spill Me!",
-            `response_interact_spill_me_${menfessDbData.channelChatId}_${userId}`
+            `interact_spill_me_${menfessDbData.channelChatId}_${userId}`
           )
           .url("🔗 Menfess", channelUrl)
           .row();
@@ -651,9 +653,10 @@ export async function initPasteLinkHandler(bot: Bot<BotContext>) {
           menfessDbData.senderId,
           `💝💝💝\n\n` +
             `✨ *Heyy!* ✨\n\n` +
-            `🔍 Seseorang ${senderInfo} penasaran dan ingin mengetahui siapa yang mengirim menfess ini! 🤔\n\n` +
+            `🎉 Seorang ${senderInfo}\n` +
+            `penasaran dan ingin mengetahui siapa yang mengirim menfess ini! 🤔\n\n` +
             `📝 *Menfess kamu:*\n\n` +
-            `❝${menfessOnGroupText}...❞\n\n` +
+            `❝${menfessOnGroupText}❞\n\n` +
             "💌 Pesan: \n\n" +
             `❝${ctx.message.text}❞\n\n` +
             `💫 Apakah kamu ingin memberi tahu identitasmu? 👀`,
