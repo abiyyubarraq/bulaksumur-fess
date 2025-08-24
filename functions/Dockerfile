@@ -13,9 +13,6 @@ RUN bun install
 # Copy source code
 COPY . .
 
-# Build the application
-RUN bun run build:prod
-
 # Production stage
 FROM oven/bun:1-slim
 
@@ -25,11 +22,12 @@ WORKDIR /app
 # Copy package files
 COPY package.json ./
 
-# Install only production dependencies
-RUN bun install --production
+# Install dependencies
+RUN bun install
 
-# Copy built application from build stage
-COPY --from=base /app/dist ./dist
+# Copy source code from build stage
+COPY --from=base /app/src ./src
+COPY --from=base /app/tsconfig.json ./
 
 # Create non-root user
 RUN addgroup --system --gid 1002 appuser
@@ -49,4 +47,4 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD bun --version || exit 1
 
 # Start the application
-CMD ["bun", "run", "start:prod"]
+CMD ["bun", "run", "start"]
