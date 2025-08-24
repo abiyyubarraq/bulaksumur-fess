@@ -1,0 +1,51 @@
+name: Deploy to VPS (Docker)
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy to VPS
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+          
+      - name: Deploy to VPS
+        uses: easingthemes/ssh-deploy@v4
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
+          REMOTE_USER: ${{ secrets.REMOTE_USER }}
+          SOURCE: "functions/"
+          TARGET: "/opt/bulaksumur-bot/"
+          ARGS: "--delete -rlptgoD --rsync-path='sudo rsync'"
+          SCRIPT_BEFORE: |
+            sudo mkdir -p /opt/bulaksumur-bot
+            sudo mkdir -p /opt/bulaksumur-bot/logs
+          SCRIPT_AFTER: |
+            cd /opt/bulaksumur-bot
+            sudo chown -R $USER:$USER /opt/bulaksumur-bot
+            
+            # Create .env file from secrets (you can replace this with your own .env file)
+            cat > .env << EOF
+            BOT_TOKEN=${{ secrets.BOT_TOKEN }}
+            FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }}
+            FIREBASE_PRIVATE_KEY="${{ secrets.FIREBASE_PRIVATE_KEY }}"
+            FIREBASE_CLIENT_EMAIL=${{ secrets.FIREBASE_CLIENT_EMAIL }}
+            # Add your other environment variables here
+            # NODE_ENV=production
+            # Add any other variables you need
+            EOF
+            
+            # Make deployment script executable
+            chmod +x docker-deploy.sh
+            
+            # Deploy using Docker
+            ./docker-deploy.sh
+            
+            # Show final status
+            docker-compose ps
