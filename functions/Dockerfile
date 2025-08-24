@@ -5,10 +5,10 @@ FROM oven/bun:1 as base
 WORKDIR /app
 
 # Copy package files
-COPY package.json bun.lockb ./
+COPY package.json ./
 
 # Install dependencies
-RUN bun install --frozen-lockfile
+RUN bun install
 
 # Copy source code
 COPY . .
@@ -26,7 +26,7 @@ WORKDIR /app
 COPY package.json ./
 
 # Install only production dependencies
-RUN bun install --production --frozen-lockfile
+RUN bun install --production
 
 # Copy built application from build stage
 COPY --from=base /app/dist ./dist
