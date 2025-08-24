@@ -35,4 +35,4 @@ jobs:
         
       - name: Run linter
         working-directory: ./functions
-        run: bun run lint
+        run: bun x @biomejs/biome lint --diagnostic-level=error src/
