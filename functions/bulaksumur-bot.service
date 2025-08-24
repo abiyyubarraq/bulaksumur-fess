@@ -1,0 +1,26 @@
+[Unit]
+Description=Bulaksumur Menfess Bot
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/bulaksumur-bot
+ExecStart=/root/.bun/bin/bun index.js
+Restart=always
+RestartSec=10
+
+# Environment variables (you'll need to set these)
+Environment=NODE_ENV=production
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=bulaksumur-bot
+
+# Process management
+KillMode=process
+TimeoutStopSec=30
+
+[Install]
+WantedBy=multi-user.target

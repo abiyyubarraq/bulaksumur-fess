@@ -5,7 +5,9 @@
   "scripts": {
     "dev": "bun --watch src/index.ts",
     "start": "bun run src/index.ts",
-    "build": "bun build src/index.ts --outdir=dist",
+    "build": "bun build src/index.ts --outdir=dist --target=node --format=esm",
+    "build:prod": "bun build src/index.ts --outdir=dist --target=node --format=esm --minify",
+    "start:prod": "cd dist && bun index.js",
     "lint": "npx @biomejs/biome lint --diagnostic-level=error .",
     "format": "npx @biomejs/biome format --write ."
   },
