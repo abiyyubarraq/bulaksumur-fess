@@ -48,4 +48,4 @@ jobs:
             ./docker-deploy.sh
             
             # Show final status
-            docker-compose ps
+            docker compose ps

@@ -132,35 +132,35 @@ To test your build locally before deploying:
 
 ### Check Container Status
 ```bash
-docker-compose ps
+docker compose ps
 ```
 
 ### View Logs
 ```bash
 # View all logs
-docker-compose logs
+docker compose logs
 
 # Follow logs in real-time
-docker-compose logs -f
+docker compose logs -f
 
 # View logs for specific service
-docker-compose logs bulaksumur-bot
+docker compose logs bulaksumur-bot
 ```
 
 ### Restart Container
 ```bash
-docker-compose restart
+docker compose restart
 ```
 
 ### Stop Container
 ```bash
-docker-compose down
+docker compose down
 ```
 
 ### Update and Redeploy
 ```bash
 # Pull latest changes and rebuild
-docker-compose up -d --build
+docker compose up -d --build
 
 # Or use the deployment script
 ./docker-deploy.sh
@@ -168,7 +168,7 @@ docker-compose up -d --build
 
 ### Access Container Shell
 ```bash
-docker-compose exec bulaksumur-bot sh
+docker compose exec bulaksumur-bot sh
 ```
 
 ## Environment Variables
@@ -187,7 +187,7 @@ NODE_ENV=production
 
 ### Common Issues
 
-1. **Container Won't Start**: Check logs with `docker-compose logs`
+1. **Container Won't Start**: Check logs with `docker compose logs`
 2. **Environment Variables**: Verify all required variables are set in `.env`
 3. **Port Conflicts**: Ensure port 3000 is not in use
 4. **Permission Issues**: Make sure the deployment script is executable
@@ -216,7 +216,7 @@ docker system prune -f
 
 ### Log Files
 
-- **Container logs**: `docker-compose logs`
+- **Container logs**: `docker compose logs`
 - **Application logs**: Mounted in `/opt/bulaksumur-bot/logs/`
 
 ## Security Recommendations
@@ -243,7 +243,7 @@ Set up basic monitoring:
 # Create a simple health check script
 cat > /opt/bulaksumur-bot/health-check.sh << 'EOF'
 #!/bin/bash
-if ! docker-compose ps | grep -q "Up"; then
+if ! docker compose ps | grep -q "Up"; then
     echo "Bot container is down, attempting restart..."
     cd /opt/bulaksumur-bot
     ./docker-deploy.sh

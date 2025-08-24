@@ -23,7 +23,7 @@ mkdir -p logs
 
 # Stop and remove existing container if it exists
 echo "🛑 Stopping existing container..."
-docker-compose down --remove-orphans || true
+docker compose down --remove-orphans || true
 
 # Remove old images to free up space
 echo "🧹 Cleaning up old images..."
@@ -31,14 +31,14 @@ docker image prune -f || true
 
 # Build and start the container
 echo "🔨 Building and starting container..."
-docker-compose up -d --build
+docker compose up -d --build
 
 # Wait for container to be healthy
 echo "⏳ Waiting for container to be healthy..."
 timeout=60
 counter=0
 while [ $counter -lt $timeout ]; do
-    if docker-compose ps | grep -q "healthy"; then
+    if docker compose ps | grep -q "healthy"; then
         echo "✅ Container is healthy!"
         break
     fi
@@ -53,12 +53,12 @@ fi
 
 # Show container status
 echo "📊 Container status:"
-docker-compose ps
+docker compose ps
 
 # Show logs
 echo "📋 Recent logs:"
-docker-compose logs --tail=20
+docker compose logs --tail=20
 
 echo "🎉 Deployment completed successfully!"
-echo "To view logs: docker-compose logs -f"
-echo "To stop: docker-compose down"
+echo "To view logs: docker compose logs -f"
+echo "To stop: docker compose down"
