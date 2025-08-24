@@ -32,14 +32,14 @@ RUN bun install --production
 COPY --from=base /app/dist ./dist
 
 # Create non-root user
-RUN addgroup --system --gid 1001 bun
-RUN adduser --system --uid 1001 bun
+RUN addgroup --system --gid 1002 appuser
+RUN adduser --system --uid 1002 --gid 1002 appuser
 
 # Change ownership of the app directory
-RUN chown -R bun:bun /app
+RUN chown -R appuser:appuser /app
 
 # Switch to non-root user
-USER bun
+USER appuser
 
 # Expose port (if needed for webhooks)
 EXPOSE 3000
