@@ -1,6 +1,7 @@
 import { Bot, InlineKeyboard } from "grammy";
 
 import moment from "moment";
+import { customAlphabet } from "nanoid";
 import { botConfig } from "../utils/config";
 import { MONTH_NAMES } from "../utils/constants";
 import { db } from "../utils/firebase";
@@ -10,6 +11,7 @@ import {
   isValidEmail,
   isValidName,
   matchCallbackData,
+  transporter,
 } from "../utils/helpers";
 import type { BotContext, UserDbData } from "../utils/types";
 
@@ -303,7 +305,7 @@ export function initSessionModule(bot: Bot<BotContext>): void {
       return;
     }
 
-    const messageText = ctx.message?.text || "";
+    const messageText = ctx.message?.text?.trim() || "";
 
     async function sendBotMessage(
       text: string,
@@ -404,7 +406,7 @@ export function initSessionModule(bot: Bot<BotContext>): void {
 
         const year = parseInt(messageText);
         const currentYear = moment().year();
-        if (isNaN(year) || year < 1980 || year > currentYear - 17) {
+        if (isNaN(year) || year < 1980 || year > currentYear - 18) {
           const birthYearKeyboard = new InlineKeyboard().text(
             "❌ Reset",
             "reset_data"
@@ -596,8 +598,9 @@ export function initSessionModule(bot: Bot<BotContext>): void {
           await sendBotMessage(getProgressMessage(ctx, "email"), emailKeyboard);
           return;
         }
+        const isEmailValid = await isValidEmail(messageText);
 
-        if (!isValidEmail(messageText)) {
+        if (!isEmailValid) {
           const emailKeyboard = new InlineKeyboard().text(
             "❌ Reset",
             "reset_data"
@@ -639,7 +642,13 @@ export function initSessionModule(bot: Bot<BotContext>): void {
           return;
         }
 
-        if (!/^\d{6}$/.test(messageText)) {
+        const isCodeValid = await db
+          .collection("users")
+          .doc(userId.toString())
+          .get()
+          .then((doc) => doc.data()?.emailCode === messageText);
+
+        if (!isCodeValid) {
           const emailKeyboard = new InlineKeyboard().text(
             "❌ Reset Email",
             "reset_email_data"
@@ -836,6 +845,20 @@ export function initSessionModule(bot: Bot<BotContext>): void {
       });
       return;
     }
+
+    const randomCode = customAlphabet("0123456789", 6)();
+
+    await db.collection("users").doc(userId.toString()).set({
+      emailCode: randomCode,
+    });
+
+    await transporter.sendMail({
+      from: "Yujiem Fess Bot",
+      to: ctx.session.emailRegistered?.toLowerCase() as string,
+      subject: "Your Verification Code For Yujiem Fess Bot Registration",
+      text: "Your verification code is: " + randomCode,
+      html: "<p>Your verification code is: <b>" + randomCode + "</b></p>",
+    });
 
     ctx.session.registerStep = "verifyEmail";
 
@@ -1115,7 +1138,8 @@ function getProgressMessage(
       message += "\n📅 Silahkan pilih bulan lahir kamu:";
       break;
     case "birthYear":
-      message += "\n🕰️ Silahkan masukkan tahun lahir kamu (contoh: 2005):";
+      message +=
+        "\n🕰️ Silahkan masukkan tahun lahir kamu (contoh: 2005, minimal udah 18 yakk cinta):";
       break;
     case "gender":
       message += "\n♀️♂️ Silahkan pilih jenis kelamin kamu:";
@@ -1132,7 +1156,7 @@ function getProgressMessage(
       break;
     case "email":
       message +=
-        "\n📬 Silahkan masukkan alamat email yujiem kamu (contoh: yujiem@mail.ugm.ac.id):";
+        "\n📬 Silahkan masukkan alamat email yujiem kamu yang belum pernah digunakan untuk registrasi (contoh: yujiem@mail.ugm.ac.id):";
       break;
     case "confirmData":
       message +=

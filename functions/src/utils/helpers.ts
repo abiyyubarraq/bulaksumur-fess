@@ -1,6 +1,7 @@
 import { nanoid } from "nanoid";
 import nodemailer from "nodemailer";
 import { botConfig } from "./config";
+import { db } from "./firebase";
 import { getPremiumBadge } from "./premium.helpers";
 import type { BotContext, SessionData } from "./types";
 
@@ -148,9 +149,17 @@ export function formatDateFromTimestamp(timestamp?: any): string {
  * @param email The email string to validate
  * @returns Boolean indicating if email format is valid
  */
-export function isValidEmail(email: string): boolean {
+export async function isValidEmail(email: string): Promise<boolean> {
   const emailRegex = /^[^\s@]+@mail\.ugm\.ac\.id$/;
-  return emailRegex.test(email);
+
+  const isEmailUsed = await db
+    .collection("users")
+    .where("emailRegistered", "==", email.toLowerCase())
+    .limit(1)
+    .select()
+    .get();
+
+  return emailRegex.test(email.toLowerCase()) && isEmailUsed.docs.length === 0;
 }
 
 /**
