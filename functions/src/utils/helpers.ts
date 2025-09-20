@@ -1,4 +1,5 @@
 import { nanoid } from "nanoid";
+import nodemailer from "nodemailer";
 import { botConfig } from "./config";
 import { getPremiumBadge } from "./premium.helpers";
 import type { BotContext, SessionData } from "./types";
@@ -26,7 +27,7 @@ export function getFormattedDate(): string {
  * @param length Length of the unique ID (default: 12)
  * @returns A unique identifier string
  */
-export function generateUID(length: number = 12): string {
+export function generateUID(length = 12): string {
   return nanoid(length);
 }
 
@@ -42,7 +43,7 @@ export function extractMenfessUID(message: string | undefined): string | null {
   const regex = /!\$([a-zA-Z0-9_-]+)(?:\s*$|\n|$)/;
   const match = message.match(regex);
 
-  if (match && match[1]) {
+  if (match?.[1]) {
     return match[1];
   }
 
@@ -107,7 +108,7 @@ export const retryWrapper = async (
       } else {
         console.log(`Reached maximum attempt for ${errorStepMessage}.`);
         isFail = true;
-        errorMessage = errorStepMessage + " " + message;
+        errorMessage = `${errorStepMessage} ${message}`;
       }
     }
   }
@@ -180,8 +181,8 @@ export function matchCallbackData(
  */
 export function isValidMessage(
   message: string,
-  minimalStringLength: number = 32,
-  maximalStringLength: number = 888
+  minimalStringLength = 32,
+  maximalStringLength = 888
 ): boolean {
   // Check minimum length of 32 characters
   if (message.length < minimalStringLength) {
@@ -224,7 +225,7 @@ export function sliceMenfessText(message: string): string {
 
   // Limit the main content to maximum 70 characters
   if (trimmedMessage.length > 70) {
-    trimmedMessage = trimmedMessage.substring(0, 70).trim() + "...";
+    trimmedMessage = `${trimmedMessage.substring(0, 70).trim()}...`;
   }
 
   return trimmedMessage;
@@ -323,3 +324,23 @@ export function getAge(session: SessionData): string {
 export function getAgeAndGender(session: SessionData): string {
   return getGenderEmoji(session.gender) + getAge(session);
 }
+
+export const transporter = nodemailer.createTransport({
+  host: "smtp.gmail.com",
+  port: 465,
+  secure: true,
+  auth: {
+    user: botConfig.emailUser,
+    pass: botConfig.emailPass,
+  },
+  tls: {
+    rejectUnauthorized: false,
+  },
+});
+// await transporter.sendMail({
+//   from: `"Your Bot"`,
+//   to: "abiyyu.b@gmail.com",
+//   subject: "Your Verification Code For ",
+//   text: "Your verification code is: cuki",
+//   html: "<p>Your verification code is: <b>cuki</b></p>",
+// });

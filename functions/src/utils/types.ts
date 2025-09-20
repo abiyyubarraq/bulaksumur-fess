@@ -104,6 +104,8 @@ export interface BotConfig {
   botChatIdNumber: number;
   groupAccId: number;
   channelAccId: number;
+  emailUser: string;
+  emailPass: string;
 }
 
 export interface UserDbData {

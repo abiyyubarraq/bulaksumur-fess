@@ -1,4 +1,4 @@
-import { Bot } from "grammy";
+import type { Bot } from "grammy";
 import {
   sendPasteChannelCommentLinkMenu,
   sendPasteChannelLinkMenu,
@@ -13,6 +13,7 @@ import {
   sendHelpMenu,
   sendMainMenu,
   sendReportFeedbackMenu,
+  sendResetMenu,
   sendRulesMenu,
   sendSendAnonMessageMenu,
   sendStartPostMenu,
@@ -60,22 +61,25 @@ export function initCommands(bot: Bot<BotContext>): void {
     const receivedCmd = ctx.message.text?.split(" ")[0];
     if (
       receivedCmd &&
-      !["menu", "help", "rules"].includes(receivedCmd.substring(1))
+      !["menu", "help", "rules", "reset"].includes(receivedCmd.substring(1))
     ) {
       await ctx.reply(
         "⚠️ Perintah tidak ditemukan. Gunakan /help untuk melihat perintah yang tersedia."
       );
       return;
-    } else {
-      ctx.session.route = "idle";
-      await next();
-      return;
     }
+    ctx.session.route = "idle";
+    await next();
+    return;
   });
 
   // Init Command
   bot.command("help", async (ctx) => {
     await sendHelpMenu(ctx);
+  });
+
+  bot.command("reset", async (ctx) => {
+    await sendResetMenu(ctx);
   });
 
   bot.command("menu", async (ctx) => {

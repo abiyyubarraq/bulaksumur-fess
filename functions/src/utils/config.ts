@@ -29,6 +29,8 @@ export const botConfig: BotConfig = {
   channelAccId: process.env.CHANNEL_ACC_ID
     ? Number(process.env.CHANNEL_ACC_ID)
     : 0,
+  emailUser: process.env.EMAIL_USER || "",
+  emailPass: process.env.EMAIL_PASS || "",
 };
 
 // Validate config
@@ -46,12 +48,12 @@ if (!botConfig.groupChatId) {
 
 if (!botConfig.channelGroupChatIdNumber) {
   throw new Error(
-    "CHANNEL_GROUP_CHAT_ID_NUMBER is not defined in environment variables"
+    "CHANNEL_GROUP_CHAT_ID_NUMBER is not defined in environment variables",
   );
 }
 
 if (!botConfig.groupChatIdNumber) {
   throw new Error(
-    "GROUP_CHAT_ID_NUMBER is not defined in environment variables"
+    "GROUP_CHAT_ID_NUMBER is not defined in environment variables",
   );
 }

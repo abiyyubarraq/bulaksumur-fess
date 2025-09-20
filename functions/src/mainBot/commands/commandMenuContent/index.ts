@@ -47,7 +47,7 @@ const myData = (ctx: BotContext, userId: number) => {
   );
 };
 
-export async function sendMainMenu(ctx: BotContext, isBack: boolean = false) {
+export async function sendMainMenu(ctx: BotContext, isBack = false) {
   const userId = ctx.from?.id;
   if (!userId) return;
 
@@ -114,7 +114,7 @@ export async function sendBuyPremiumMenu(ctx: BotContext) {
     .text("💰 Premium 💎💎💎", "purchase_premium_member")
     .row()
     .text("« BACK", "back_to_main_menu");
-  await ctx.reply("Silahkan pilih apa yang ingin kamu beli 💹🤔", {
+  await ctx.editMessageText("Silahkan pilih apa yang ingin kamu beli 💹🤔", {
     reply_markup: keyboard,
   });
 }
@@ -124,8 +124,13 @@ export async function sendHelpMenu(ctx: BotContext) {
     "Bulaksumur Menfess Bot Commands:\n\n" +
       "/menu - Get the main menu\n" +
       "/help - Show this help message\n" +
-      "/rules - Show the rules\n"
+      "/rules - Show the rules\n" +
+      "/reset - Reset the bot\n"
   );
+}
+
+export async function sendResetMenu(ctx: BotContext) {
+  await ctx.reply("Bot reset berhasil! Silahkan mulai lagi dari awal. ➿");
 }
 
 export async function sendStartPostMenu(ctx: BotContext) {
@@ -214,7 +219,7 @@ export async function sendViewProfileMenu(ctx: BotContext) {
   // Format profile display text with dividers for better readability
   let profileText = `<blockquote>${userDbData.bio}</blockquote>\n\n`;
   if (userDbData.isBanned) {
-    profileText += `🚫 Waspada user ini telah dibanned! 🚫\n`;
+    profileText += "🚫 Waspada user ini telah dibanned! 🚫\n";
   }
   profileText += `👤 Name : ${userDbData.anonName}${getPremiumBadge(userDbData.premiumStatus)}\n`;
   profileText += `🧬 Sex : ${userDbData.gender === "M" ? "🕺 #M♂" : "💃 #F♀"}\n`;
