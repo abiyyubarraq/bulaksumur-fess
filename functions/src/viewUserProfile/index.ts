@@ -1,4 +1,5 @@
 import { type Bot, InlineKeyboard } from "grammy";
+import * as mt from "moment-timezone";
 import { db } from "../utils/firebase";
 import {
   getGenderEmoji,
@@ -8,6 +9,7 @@ import {
 import { GoldRate } from "../utils/premium.helpers";
 import type { BotContext } from "../utils/types";
 
+const moment = mt.tz.setDefault("Asia/Jakarta");
 const usersInAnonMessageMode = new Map<
   number,
   {
@@ -250,7 +252,7 @@ export function initViewUserProfile(bot: Bot<BotContext>): void {
         reportText: sanitizeMessage(messageText),
         userId: targetUserId,
         userName: targetUsername,
-        createdAt: new Date(),
+        createdAt: moment().toDate(),
         isFromMenfess: false,
         isRead: false,
       });

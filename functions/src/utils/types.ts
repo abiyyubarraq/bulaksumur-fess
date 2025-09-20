@@ -66,6 +66,7 @@ export interface SessionData {
   startAnonChatAt: Date | null;
   messageIdOnOtherUserSent: number[];
   myMessageIdOnOtherUserSent: number[];
+  lastUpdateDailyGoldQuota: Date | null;
 }
 
 export type BotContext = Context & SessionFlavor<SessionData>;

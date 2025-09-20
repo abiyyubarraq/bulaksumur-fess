@@ -1,9 +1,10 @@
 import { Bot, InlineKeyboard } from "grammy";
-import moment from "moment";
+import * as mt from "moment-timezone";
 import { db } from "../utils/firebase";
 import { isValidMessage, sanitizeMessage } from "../utils/helpers";
 import type { BotContext, ListenFeedbackState } from "../utils/types";
 
+const moment = mt.tz.setDefault("Asia/Jakarta");
 const userStates = new Map<number, ListenFeedbackState>();
 
 const waitingForFeedbackMessage = (feedBackType: string) =>
@@ -58,7 +59,7 @@ export function initSendFeedbackHandlers(bot: Bot<BotContext>): void {
             username: ctx.from?.username || "",
             message: sanitizeMessage(messageText),
             feedbackType: state.feedBackType,
-            createdAt: new Date(),
+            createdAt: moment().toDate(),
             isRead: false,
           });
         await ctx.reply(
@@ -68,7 +69,7 @@ export function initSendFeedbackHandlers(bot: Bot<BotContext>): void {
             reply_to_message_id: ctx.message?.message_id,
           }
         );
-        ctx.session.lastSendFeedback = new Date();
+        ctx.session.lastSendFeedback = moment().toDate();
       } catch (error) {
         console.error("Error sending feedback:", error);
         await ctx.reply(

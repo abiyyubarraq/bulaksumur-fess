@@ -1,11 +1,13 @@
 import { InlineKeyboard } from "grammy";
-import moment from "moment";
+import * as mt from "moment-timezone";
 import { AGREEMENTS, agreementFooter } from "../../../tosMenu";
 import { botConfig } from "../../../utils/config";
 import { MONTH_NAMES } from "../../../utils/constants";
 import { db } from "../../../utils/firebase";
 import { getPremiumBadge } from "../../../utils/premium.helpers";
 import type { BotContext, UserDbData } from "../../../utils/types";
+
+const moment = mt.tz.setDefault("Asia/Jakarta");
 
 export const footer =
   `👪 Channel Base: @${botConfig.channelId.replace("@", "")}\n` +

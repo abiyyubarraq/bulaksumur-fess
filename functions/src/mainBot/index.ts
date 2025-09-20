@@ -56,6 +56,7 @@ export function createBot(): Bot<BotContext> {
       startAnonChatAt: null,
       messageIdOnOtherUserSent: [],
       myMessageIdOnOtherUserSent: [],
+      lastUpdateDailyGoldQuota: null,
     };
   }
   function getSessionKey(ctx: Context): string | undefined {

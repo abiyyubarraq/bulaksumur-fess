@@ -1,4 +1,5 @@
 import { Bot, InlineKeyboard } from "grammy";
+import * as mt from "moment-timezone";
 import {
   getMenfessText,
   handleMaxInteractionsReached,
@@ -20,6 +21,7 @@ import type {
   MenfessDbData,
 } from "../utils/types";
 
+const moment = mt.tz.setDefault("Asia/Jakarta");
 const userInAnonReplyMode = new Map<
   number,
   {
@@ -546,7 +548,7 @@ export async function initPasteLinkHandler(bot: Bot<BotContext>) {
           senderUsername: ctx.from?.username?.toLowerCase(),
           groupChatId: sentMessage.message_id,
           replyToMessageId: groupChatId,
-          createdAt: new Date(),
+          createdAt: moment().toDate(),
           messagePreview: ctx.message.text.slice(0, 15),
         });
 
@@ -680,7 +682,7 @@ export async function initPasteLinkHandler(bot: Bot<BotContext>) {
       );
       ctx.session.route = "idle";
       userInInteractionPlusMode.delete(userId);
-      ctx.session.lastSentInteract = new Date();
+      ctx.session.lastSentInteract = moment().toDate();
       ctx.session.dailyGoldQuota =
         ctx.session.dailyGoldQuota - GoldRate.INTERACT;
     } else {

@@ -1,6 +1,6 @@
 import { Bot, InlineKeyboard } from "grammy";
 
-import moment from "moment";
+import * as mt from "moment-timezone";
 import { customAlphabet } from "nanoid";
 import { botConfig } from "../utils/config";
 import { MONTH_NAMES } from "../utils/constants";
@@ -13,8 +13,10 @@ import {
   matchCallbackData,
   transporter,
 } from "../utils/helpers";
+import { getDailyGoldQuota } from "../utils/premium.helpers";
 import type { BotContext, UserDbData } from "../utils/types";
 
+const moment = mt.tz.setDefault("Asia/Jakarta");
 const lastBotMessages = new Map<number, number>();
 
 const FACULTY_LIST = [
@@ -53,10 +55,25 @@ const loadUserDataIntoSession = async (
         userData.registerStep
       )
     ) {
-      if (username.toLowerCase() !== userData.username) {
-        await db.collection("users").doc(userId.toString()).update({
-          username: username.toLowerCase(),
-        });
+      const isPremiumExpired =
+        userData.premiumUntil &&
+        moment(moment()).isAfter(moment(userData.premiumUntil.toDate()));
+
+      const isUsernameChanged = username.toLowerCase() !== userData.username;
+
+      if (isUsernameChanged || isPremiumExpired) {
+        await db
+          .collection("users")
+          .doc(userId.toString())
+          .update({
+            ...(isUsernameChanged && {
+              username: username.toLowerCase(),
+            }),
+            ...(isPremiumExpired && {
+              premiumUntil: null,
+              premiumStatus: null,
+            }),
+          });
       }
 
       ctx.session.isRegistered = true;
@@ -71,17 +88,29 @@ const loadUserDataIntoSession = async (
       ctx.session.bio = userData.bio;
       ctx.session.registerStep = userData.registerStep;
       ctx.session.userId = userId;
-      ctx.session.premiumStatus = userData.premiumStatus;
-      ctx.session.premiumUntil = userData.premiumUntil?.toDate() || null;
-      ctx.session.lastUserUpdatedDataWithDb = new Date();
+      ctx.session.premiumStatus = isPremiumExpired
+        ? null
+        : userData.premiumStatus;
+      ctx.session.premiumUntil = isPremiumExpired
+        ? null
+        : userData.premiumUntil?.toDate() || null;
+      ctx.session.lastUserUpdatedDataWithDb = moment().toDate();
       ctx.session.agreement1 = userData.agreement1 ?? false;
       ctx.session.agreement2 = userData.agreement2 ?? false;
       ctx.session.agreement3 = userData.agreement3 ?? false;
-      ctx.session.age = moment(new Date()).diff(
+      ctx.session.age = moment().diff(
         moment(new Date(userData.birthYear, userData.birthMonth - 1, 1)),
         "years"
       );
-      //   ctx.session.dailyGoldQuota = userData.dailyGoldQuota; // should to adjusted, dont put it here
+
+      if (
+        !ctx.session.lastUpdateDailyGoldQuota ||
+        !moment(ctx.session.lastUpdateDailyGoldQuota).isSame(moment(), "day")
+      ) {
+        ctx.session.dailyGoldQuota = getDailyGoldQuota(userData.premiumStatus);
+        ctx.session.lastUpdateDailyGoldQuota = moment().toDate();
+      }
+
       return true;
     }
   }
@@ -290,7 +319,9 @@ export function initSessionModule(bot: Bot<BotContext>): void {
       moment().diff(ctx.session.lastUserUpdatedDataWithDb, "hours") > 6
     ) {
       if (await checkUserBanned(ctx, userId)) {
-        await ctx.reply("❌ Maaf, kamu tidak diizinkan mengirim menfess. 🚫");
+        await ctx.reply(
+          "❌ Maaf, kamu tidak diizinkan berinteraksi dengan bot ini. 🚫"
+        );
         return;
       }
 
@@ -663,29 +694,33 @@ export function initSessionModule(bot: Bot<BotContext>): void {
 
         ctx.session.registerStep = "agreement1";
         ctx.session.isRegistered = true;
-        ctx.session.registeredAt = new Date();
+        ctx.session.registeredAt = moment().toDate();
 
         lastBotMessages.delete(userId);
-        await db.collection("users").doc(userId.toString()).set({
-          username: username.toLowerCase(),
-          emailRegistered: ctx.session.emailRegistered,
-          gender: ctx.session.gender,
-          birthMonth: ctx.session.birthMonth,
-          birthYear: ctx.session.birthYear,
-          bio: ctx.session.bio,
-          faculty: ctx.session.faculty,
-          univYear: ctx.session.univYear,
-          registerStep: ctx.session.registerStep,
-          isEmailVerified: true,
-          registeredAt: ctx.session.registeredAt,
-          anonName: ctx.session.anonName,
-          premiumStatus: ctx.session.premiumStatus,
-          premiumUntil: ctx.session.premiumUntil,
-          menfessCount: 0,
-          deletedCount: 0,
-          warnedCount: 0,
-          isBanned: false,
-        });
+        await db
+          .collection("users")
+          .doc(userId.toString())
+          .set({
+            username: username.toLowerCase(),
+            emailRegistered: ctx.session.emailRegistered,
+            gender: ctx.session.gender,
+            birthMonth: ctx.session.birthMonth,
+            birthYear: ctx.session.birthYear,
+            bio: ctx.session.bio,
+            faculty: ctx.session.faculty,
+            univYear: ctx.session.univYear,
+            registerStep: ctx.session.registerStep,
+            isEmailVerified: true,
+            registeredAt: ctx.session.registeredAt,
+            anonName: ctx.session.anonName,
+            premiumStatus: ctx.session.premiumStatus || 1, // TODO: Remove this
+            premiumUntil:
+              ctx.session.premiumUntil || moment().add(2, "month").toDate(), // TODO: Remove this
+            menfessCount: 0,
+            deletedCount: 0,
+            warnedCount: 0,
+            isBanned: false,
+          });
         await ctx.reply(
           "🎉✨ Selamat! Pendaftaran kamu telah berhasil! 🎊🎈\n\n" +
             `👤 Nama Anonym: ${ctx.session.anonName}\n` +

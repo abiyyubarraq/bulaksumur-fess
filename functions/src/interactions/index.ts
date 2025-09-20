@@ -1,6 +1,6 @@
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { Bot, InlineKeyboard } from "grammy";
-import moment from "moment";
+import * as mt from "moment-timezone";
 import { customAlphabet } from "nanoid";
 import { anonGuideText } from "../anonChat";
 import { botConfig } from "../utils/config";
@@ -12,6 +12,8 @@ import {
 } from "../utils/helpers";
 import { GoldRate } from "../utils/premium.helpers";
 import type { BotContext, MenfessDbData } from "../utils/types";
+
+const moment = mt.tz.setDefault("Asia/Jakarta");
 
 export const getMenfessText = (type: string): string => {
   const texts = {
@@ -75,7 +77,7 @@ export const handleMaxInteractionsReached = async (
   );
 
   await updateInteractUsers(menfessUID, userId, action, false);
-  ctx.session.lastSentInteract = new Date();
+  ctx.session.lastSentInteract = moment().toDate();
 };
 
 export async function postMenfessInteraction(
@@ -209,7 +211,7 @@ export function initInteractionHandlers(bot: Bot<BotContext>): void {
         userName: menfessDbData.senderUserName.toLowerCase(),
         menfessChannelChatId: menfessDbData.channelChatId,
         menfessGroupChatId: menfessDbData.groupChatId,
-        createdAt: new Date(),
+        createdAt: moment().toDate(),
         isFromMenfess: true,
         isRead: false,
       });
@@ -217,7 +219,7 @@ export function initInteractionHandlers(bot: Bot<BotContext>): void {
       await ctx.answerCallbackQuery(
         "Your report has been sent to the admin 🫡"
       );
-      ctx.session.lastSentInteract = new Date();
+      ctx.session.lastSentInteract = moment().toDate();
       return;
     }
 
@@ -310,7 +312,7 @@ export function initInteractionHandlers(bot: Bot<BotContext>): void {
     );
 
     await updateInteractUsers(menfessUID, userId, action, isUseSenderFreeQuota);
-    ctx.session.lastSentInteract = new Date();
+    ctx.session.lastSentInteract = moment().toDate();
     if (!isUseSenderFreeQuota)
       ctx.session.dailyGoldQuota =
         ctx.session.dailyGoldQuota - GoldRate.INTERACT;
@@ -548,7 +550,7 @@ export function initInteractionHandlers(bot: Bot<BotContext>): void {
             gender: ctx.session.gender,
           },
           isEnded: false,
-          createdAt: new Date(),
+          createdAt: moment().toDate(),
         });
 
       const editedMessage = `${textMessage}\n\n<u>Kamu memilih 👍 Setuju dengan ketentuan di atas dan bertanggung jawab penuh atas Anonymous Chat yang akan dikirim. 🥰</u>`;
@@ -591,7 +593,7 @@ export function initInteractionHandlers(bot: Bot<BotContext>): void {
             );
             if (otherUser) {
               ctx.session.route = `anonChat_${anonChatId}_${otherUser}`;
-              ctx.session.startAnonChatAt = new Date();
+              ctx.session.startAnonChatAt = moment().toDate();
               const keyboard = new InlineKeyboard().text(
                 "🛑 End Chat",
                 `end_chat`
@@ -678,7 +680,7 @@ export function initInteractionHandlers(bot: Bot<BotContext>): void {
         });
 
         ctx.session.route = `anonChat_${anonChatId}_${otherUser}`;
-        ctx.session.startAnonChatAt = new Date();
+        ctx.session.startAnonChatAt = moment().toDate();
         const anonChatListener = db
           .collection("anonChats")
           .doc(anonChatId)
@@ -718,7 +720,7 @@ export function initInteractionHandlers(bot: Bot<BotContext>): void {
             userName: ctx.from?.username?.toLowerCase() || "",
             gender: ctx.session.gender,
           },
-          createdAt: new Date(),
+          createdAt: moment().toDate(),
           isEnded: true,
         });
     } else if (anonChatDoc.exists) {

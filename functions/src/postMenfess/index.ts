@@ -1,6 +1,6 @@
 import { FieldValue } from "firebase-admin/firestore";
 import { Bot, InlineKeyboard } from "grammy";
-import moment from "moment";
+import * as mt from "moment-timezone";
 import { postMenfessInteraction } from "../interactions";
 
 import { footer, sendMainMenu } from "../mainBot/commands/commandMenuContent";
@@ -22,6 +22,8 @@ import {
   MenfessHashtag,
 } from "../utils/types";
 import { settingMenuMessage } from "../viewMyProfile";
+
+const moment = mt.tz.setDefault("Asia/Jakarta");
 
 const userStates = new Map<number, ListenMenfessState>();
 
@@ -292,7 +294,7 @@ export function initPostHandlers(bot: Bot<BotContext>): void {
         reply_to_message_id: tosMessage?.message_id,
       }
     );
-    ctx.session.lastPostMenfess = new Date();
+    ctx.session.lastPostMenfess = moment().toDate();
     ctx.session.dailyGoldQuota -= GoldRate.SEND_MENFESS;
   });
 
@@ -521,7 +523,7 @@ export async function postToChannel(ctx: BotContext, hashTagUsed?: string) {
           menfessUID: menfessUID,
           senderId: userId,
           senderUserName: userName?.toLowerCase() || "",
-          createdAt: new Date(),
+          createdAt: moment().toDate(),
           interactUsers: [],
           senderAlias: ctx.session.anonName,
           freeInteractQuota: getMenfessMaxInteract(ctx.session.premiumStatus),

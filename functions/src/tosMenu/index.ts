@@ -1,7 +1,10 @@
 import { Bot, InlineKeyboard } from "grammy";
+import * as mt from "moment-timezone";
 import { botConfig } from "../utils/config";
 import { db } from "../utils/firebase";
 import type { BotContext } from "../utils/types";
+
+const moment = mt.tz.setDefault("Asia/Jakarta");
 
 type AgreementItem = {
   title: string;
@@ -147,7 +150,7 @@ export function initTosMenu(bot: Bot<BotContext>): void {
           agreement2: true,
           agreement3: true,
           registerStep: "complete",
-          agreementSignAt: new Date(),
+          agreementSignAt: moment().toDate(),
         });
         await ctx.reply(
           `🌟✨ Terimakasih! kamu sudah menyetujui semua ketentuan dan peraturan dari BOT ${botConfig.botUserName} dan channel ${botConfig.channelId}.\n\n` +

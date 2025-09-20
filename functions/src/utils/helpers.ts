@@ -1,3 +1,4 @@
+import * as mt from "moment-timezone";
 import { nanoid } from "nanoid";
 import nodemailer from "nodemailer";
 import { botConfig } from "./config";
@@ -5,12 +6,14 @@ import { db } from "./firebase";
 import { getPremiumBadge } from "./premium.helpers";
 import type { BotContext, SessionData } from "./types";
 
+const moment = mt.tz.setDefault("Asia/Jakarta");
+
 /**
  * Get a formatted date string for menfess posts
  * @returns A formatted date string
  */
 export function getFormattedDate(): string {
-  const now = new Date();
+  const now = moment().toDate();
   const formattedDate = now.toLocaleDateString("id-ID", {
     weekday: "long",
     day: "numeric",
