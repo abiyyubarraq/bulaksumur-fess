@@ -298,8 +298,7 @@ export function isForwardedMenfessFromChannelToGroup(ctx: BotContext): boolean {
   return Boolean(
     ctx.senderChat?.id === botConfig.channelGroupChatIdNumber &&
       ctx.chat?.id === botConfig.groupChatIdNumber &&
-      ctx.message?.message_id &&
-      extractMenfessUID(ctx.message.text)
+      ctx.message?.message_id
   );
 }
 

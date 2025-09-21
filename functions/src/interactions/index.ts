@@ -84,6 +84,10 @@ export async function postMenfessInteraction(
   ctx: BotContext,
   bot: Bot<BotContext>
 ) {
+  const menfessUID = extractMenfessUID(
+    ctx.message?.text || ctx.message?.caption
+  );
+  if (!menfessUID) return;
   const keyboard = new InlineKeyboard()
     .text("👊 Hit Me!", "hitme")
     .text("🕵️ Who?", "who")
@@ -100,19 +104,15 @@ export async function postMenfessInteraction(
         reply_markup: keyboard,
       }
     );
-    const menfessUID = extractMenfessUID(
-      ctx.message?.text || ctx.message?.caption
-    );
-    if (menfessUID) {
-      await db.collection("menfess").doc(menfessUID).update({
-        groupChatId: ctx.message?.message_id,
-        groupChatButtonId: interactionButton.message_id,
-      });
 
-      console.log(
-        `groupChatId: ${ctx.message?.message_id} | Added interaction buttons to menfess`
-      );
-    }
+    await db.collection("menfess").doc(menfessUID).update({
+      groupChatId: ctx.message?.message_id,
+      groupChatButtonId: interactionButton.message_id,
+    });
+
+    console.log(
+      `groupChatId: ${ctx.message?.message_id} | Added interaction buttons to menfess`
+    );
   } catch (error) {
     console.error("Error adding interaction buttons:", error);
   }
