@@ -34,7 +34,7 @@ const waitingForMenfessMessage =
   `❕Hanya boleh karakter ASCII dengan maksimal 2 baris baru, diperbolehkan memakai format text telegram. ✨`;
 
 const tosBaseMessage = (username: string): string => {
-  return `Kamu @${username}\nDilarang keras mengirim Menfess:\n🚫 Tidak boleh melangar Peraturan & Ketentuan Base.\n🚫 Jual, Beli, Loker harus mengunakan Hashtag #SEL #BUY #LOKER.`;
+  return `Kamu @${username}\nDilarang keras mengirim Menfess:\n🚫 Tidak boleh melangar Peraturan & Ketentuan Base.\n🚫 Jual, Beli, Loker harus mengunakan Hashtag #SELL #BUY #LOKER.`;
 };
 
 const tosSentMenfess = (username: string): string => {

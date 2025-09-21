@@ -73,10 +73,6 @@ export function createBot(): Bot<BotContext> {
       description: "Menu Bot",
     },
     {
-      command: "/help",
-      description: "Bantuan Penggunaan Bot",
-    },
-    {
       command: "/rules",
       description: "Peraturan Base",
     },

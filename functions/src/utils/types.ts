@@ -96,13 +96,11 @@ export interface BotConfig {
   postTrigger: string;
   firebase?: {
     projectId?: string;
-    useEmulator?: boolean;
   };
   botUserName: string;
   telegramAdminId: number;
   adminBaseUserName: string;
   moderatorBaseUserName: string;
-  botChatIdNumber: number;
   groupAccId: number;
   channelAccId: number;
   emailUser: string;

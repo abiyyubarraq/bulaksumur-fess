@@ -1,10 +1,12 @@
 import { InlineKeyboard } from "grammy";
 import * as mt from "moment-timezone";
-import { AGREEMENTS, agreementFooter } from "../../../tosMenu";
 import { botConfig } from "../../../utils/config";
 import { MONTH_NAMES } from "../../../utils/constants";
 import { db } from "../../../utils/firebase";
-import { getPremiumBadge } from "../../../utils/premium.helpers";
+import {
+  getMenfessMaxInteract,
+  getPremiumBadge,
+} from "../../../utils/premium.helpers";
 import type { BotContext, UserDbData } from "../../../utils/types";
 
 const moment = mt.tz.setDefault("Asia/Jakarta");
@@ -12,7 +14,8 @@ const moment = mt.tz.setDefault("Asia/Jakarta");
 export const footer =
   `👪 Channel Base: @${botConfig.channelId.replace("@", "")}\n` +
   `👨‍💼 Admin Base: @${botConfig.adminBaseUserName}\n` +
-  `👮‍♂️ Moderator Base: @${botConfig.moderatorBaseUserName}\n`;
+  // `👮‍♂️ Moderator Base: @${botConfig.moderatorBaseUserName}\n` +
+  `🤑 https://saweria.co/sanstech\n`;
 
 const myData = (ctx: BotContext, userId: number) => {
   const bio = ctx.session.bio || "";
@@ -42,7 +45,8 @@ const myData = (ctx: BotContext, userId: number) => {
     `🎓 Univ Year : ${univYear}\n` +
     `💌 Email : ${emailRegistered}\n` +
     // `⚡ Score : ${1000}\n` +
-    `💰 Gold : ${dailyGoldQuota}\n\n` +
+    `💰 Gold : ${dailyGoldQuota}\n` +
+    `💓 Free Kuota interaksi: ${getMenfessMaxInteract(premiumStatus)}/Menfess\n\n` +
     `🆔 ID : ${userId}\n` +
     `⏱️ Join time : ${registeredAt ? moment(registeredAt).format("DD/MM/YYYY HH:mm") : "-"}\n\n` +
     `📅 Premium until : ${premiumUntil ? moment(premiumUntil).format("DD/MM/YYYY HH:mm") : "-"}\n\n`
@@ -62,9 +66,9 @@ export async function sendMainMenu(ctx: BotContext, isBack = false) {
     // .text("Inbox 📬", "view_inbox")
     .row()
     // .text("Riwayat 🌟", "view_history")
-    .text("Beli 🛒", "purchase_premium")
+    // .text("Beli 🛒", "purchase_premium")
     .row()
-    .text("Bantuan ❓", "get_help")
+    // .text("Bantuan ❓", "get_help")
     .text("Peraturan 📜", "view_rules")
     .row()
     .text("Kirim ▶️", "start_post");
@@ -100,15 +104,30 @@ export const viewMyProfileMenu = async (ctx: BotContext) => {
 };
 
 export async function sendRulesMenu(ctx: BotContext) {
-  await ctx.reply(AGREEMENTS[1].content + agreementFooter, {
-    parse_mode: "HTML",
-  });
-  await ctx.reply(AGREEMENTS[2].content + agreementFooter, {
-    parse_mode: "HTML",
-  });
-  await ctx.reply(AGREEMENTS[3].content + agreementFooter, {
-    parse_mode: "HTML",
-  });
+  // await ctx.reply(AGREEMENTS[1].content + agreementFooter, {
+  //   parse_mode: "HTML",
+  // });
+  // await ctx.reply(AGREEMENTS[2].content + agreementFooter, {
+  //   parse_mode: "HTML",
+  // });
+  // await ctx.reply(AGREEMENTS[3].content + agreementFooter, {
+  //   parse_mode: "HTML",
+  // });
+  const keyboard = new InlineKeyboard()
+    .text("Peraturan", "view_rules_1")
+    .row()
+    .text("Ketentuan", "view_rules_2")
+    .text("Pernyataan", "agree_rules")
+    .row()
+    .text("« BACK", "back_to_main_menu");
+  await ctx.editMessageText("Sending rules...");
+  await ctx.reply(
+    `<b>Hallo @${ctx.from?.username} berikut adalah peraturan dan ketentuan yang telah kamu setujui sebelumnya:</b>`,
+    {
+      parse_mode: "HTML",
+      reply_markup: keyboard,
+    }
+  );
 }
 
 export async function sendBuyPremiumMenu(ctx: BotContext) {
