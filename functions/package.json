@@ -8,10 +8,11 @@
     "build": "bun build src/index.ts --outdir=dist --target=node --format=esm",
     "build:prod": "bun build src/index.ts --outdir=dist --target=node --format=esm --minify",
     "start:prod": "cd dist && bun index.js",
-    "lint": "npx @biomejs/biome lint --diagnostic-level=error .",
-    "format": "npx @biomejs/biome format --write ."
+    "lint": "biome lint --diagnostic-level=error .",
+    "format": "biome format --write ."
   },
   "devDependencies": {
+    "@biomejs/biome": "1.9.4",
     "@types/bun": "latest",
     "@types/nodemailer": "^7.0.1"
   },
