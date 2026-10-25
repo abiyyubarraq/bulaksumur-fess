@@ -1,8 +1,6 @@
 name: Deploy to VPS (Docker)
 
 on:
-  push:
-    branches: [ main ]
   workflow_dispatch:
 
 jobs:
@@ -14,6 +12,27 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
           
+      - name: Check deploy secrets
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
+          REMOTE_USER: ${{ secrets.REMOTE_USER }}
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+          FIREBASE_PRIVATE_KEY: ${{ secrets.FIREBASE_PRIVATE_KEY }}
+          FIREBASE_CLIENT_EMAIL: ${{ secrets.FIREBASE_CLIENT_EMAIL }}
+        # The deploy rewrites the server's .env from these secrets, so a missing
+        # one would leave the bot running with an empty value.
+        run: |
+          missing=0
+          for name in SSH_PRIVATE_KEY REMOTE_HOST REMOTE_USER BOT_TOKEN FIREBASE_PROJECT_ID FIREBASE_PRIVATE_KEY FIREBASE_CLIENT_EMAIL; do
+            if [ -z "${!name}" ]; then
+              echo "::error::Secret $name is not set"
+              missing=1
+            fi
+          done
+          exit $missing
+
       - name: Deploy to VPS
         uses: easingthemes/ssh-deploy@v4
         env:
